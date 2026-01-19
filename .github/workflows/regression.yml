@@ -3,6 +3,8 @@ name: QA Regression Suite 🚀
 on:
   push:
     branches: [ main ]
+  pull_request:
+    branches: [ main ]
   workflow_dispatch:
 
 permissions:
@@ -12,21 +14,31 @@ permissions:
 
 jobs:
   run-tests:
+    name: Ejecutar Componente
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        test-file: ["masleidas.py", "notificaciones.py"] 
+        # Aquí incluimos los 3 archivos de tu checklist actual
+        test-file: ["masleidas.py", "notificaciones.py", "ads.py"] 
 
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Checkout del código
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
         with:
           python-version: '3.10'
-      - run: pip install -r requirements.txt
-      
-      - name: Ejecutar Test
-        run: pytest tests/${{ matrix.test-file }} --alluredir=allure-results
+
+      - name: Instalar dependencias
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Regresión Funcional
+        # Usamos una ruta absoluta para asegurar la captura de datos de Allure
+        run: pytest tests/${{ matrix.test-file }} --alluredir=${{ github.workspace }}/allure-results
         continue-on-error: true
 
       - name: Guardar Resultados Temporales
@@ -37,22 +49,24 @@ jobs:
           retention-days: 1
 
   generate-report:
+    name: Unificar y Publicar Reporte
     needs: run-tests
     runs-on: ubuntu-latest
     if: always()
     steps:
-      - uses: actions/checkout@v4
-      
+      - name: Checkout del código
+        uses: actions/checkout@v4
+
       - name: Descargar todos los resultados
         uses: actions/download-artifact@v4
         with:
-          path: all-results
-          merge-multiple: true # Junta todos los resultados en una sola carpeta
+          path: combined-results
+          merge-multiple: true # Crucial: junta los archivos de la matriz en una sola carpeta
 
       - name: Generar Reporte Final Allure
         uses: simple-elf/allure-report-action@master
         with:
-          allure_results: all-results
+          allure_results: combined-results
           allure_report: allure-report
           gh_pages: gh-pages
 
@@ -61,3 +75,4 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: allure-report
+          publish_branch: gh-pages
