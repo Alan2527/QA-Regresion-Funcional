@@ -5,16 +5,22 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
-  workflow_dispatch:
+  workflow_dispatch: # Permite correr los tests manualmente desde la pestaña Actions
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
 
 jobs:
   run-tests:
-    name: Ejecutar Prueba
+    name: Ejecutar Componente
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        test-file: ["masleidas.py"]
+        # Aquí defines cada script. Cada uno correrá en un contenedor distinto en paralelo.
+        test-file: ["masleidas.py", "notificaciones.py"] 
 
     steps:
       - name: Checkout del código
@@ -31,8 +37,9 @@ jobs:
           pip install -r requirements.txt
 
       - name: Regresión Funcional
-        run: pytest tests/${{ matrix.test-file }} --alluredir=allure-results
-        continue-on-error: true # Permite que el reporte se genere aunque el test falle
+        # Genera los resultados para Allure
+        run: pytest test/${{ matrix.test-file }} --alluredir=allure-results
+        continue-on-error: true
 
       - name: Generar Reporte Allure
         uses: simple-elf/allure-report-action@master
@@ -40,11 +47,12 @@ jobs:
         with:
           allure_results: allure-results
           allure_report: allure-report
-          allure_history: allure-history
+          gh_pages: gh-pages
 
-      - name: Subir Reporte como Artefacto
+      - name: Deploy a GitHub Pages
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: peaceiris/actions-gh-pages@v3
         with:
-          name: allure-report-${{ matrix.test-file }}
-          path: allure-report
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: allure-report
+          publish_branch: gh-pages
