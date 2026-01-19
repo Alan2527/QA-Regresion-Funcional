@@ -26,7 +26,7 @@ jobs:
       - run: pip install -r requirements.txt
       
       - name: Ejecutar Test
-        run: pytest test/${{ matrix.test-file }} --alluredir=allure-results
+        run: pytest tests/${{ matrix.test-file }} --alluredir=allure-results
         continue-on-error: true
 
       - name: Guardar Resultados Temporales
