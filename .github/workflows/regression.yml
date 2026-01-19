@@ -20,7 +20,7 @@ jobs:
       fail-fast: false
       matrix:
         # Aquí defines cada script. Cada uno correrá en un contenedor distinto en paralelo.
-        test-file: ["masleidas.py"] 
+        test-file: ["masleidas.py", "notificaciones.py"] 
 
     steps:
       - name: Checkout del código
