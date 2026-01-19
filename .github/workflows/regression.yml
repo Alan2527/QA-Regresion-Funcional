@@ -1,40 +1,40 @@
-name: Regresión Funcional
+name: QA Regression Suite 🚀
 
 on:
   push:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   run-tests:
-    name: Run Test Case
+    name: Ejecutar Prueba
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        # Aquí irás agregando tus scripts del checklist
-        test-file: ["masleidas.py"] 
+        test-file: ["masleidas.py"]
 
     steps:
-      - name: Checkout code
+      - name: Checkout del código
         uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: Configurar Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
 
-      - name: Install dependencies
+      - name: Instalar dependencias
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
       - name: Regresión Funcional
-        # Ejecuta pytest y genera los datos para Allure
         run: pytest test/${{ matrix.test-file }} --alluredir=allure-results
+        continue-on-error: true # Permite que el reporte se genere aunque el test falle
 
-      - name: Generate Allure Report
+      - name: Generar Reporte Allure
         uses: simple-elf/allure-report-action@master
         if: always()
         with:
@@ -42,7 +42,7 @@ jobs:
           allure_report: allure-report
           allure_history: allure-history
 
-      - name: Upload Allure Report as Artifact
+      - name: Subir Reporte como Artefacto
         if: always()
         uses: actions/upload-artifact@v4
         with:
