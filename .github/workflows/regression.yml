@@ -31,7 +31,7 @@ jobs:
           pip install -r requirements.txt
 
       - name: Regresión Funcional
-        run: pytest test/${{ matrix.test-file }} --alluredir=allure-results
+        run: pytest tests/${{ matrix.test-file }} --alluredir=allure-results
         continue-on-error: true # Permite que el reporte se genere aunque el test falle
 
       - name: Generar Reporte Allure
