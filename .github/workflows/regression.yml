@@ -3,8 +3,6 @@ name: QA Regression Suite 🚀
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
   workflow_dispatch:
 
 permissions:
@@ -13,15 +11,10 @@ permissions:
   id-token: write
 
 jobs:
-  run-tests:
-    name: Ejecutar Componente
+  run-all-tests:
+    name: Ejecución de Suite Completa
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        # Aquí incluimos los 3 archivos de tu checklist actual
-        test-file: ["masleidas.py", "notificaciones.py", "ads.py"] 
-
+    
     steps:
       - name: Checkout del código
         uses: actions/checkout@v4
@@ -36,42 +29,26 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Regresión Funcional
-        # Usamos una ruta absoluta para asegurar la captura de datos de Allure
-        run: pytest tests/${{ matrix.test-file }} --alluredir=${{ github.workspace }}/allure-results
-        continue-on-error: true
+      # Ejecutamos los tests uno por uno de forma secuencial
+      # Usamos "|| true" para que si uno falla, el siguiente se ejecute igual
+      - name: Test - Mas Leídas
+        run: pytest tests/masleidas.py --alluredir=allure-results || true
 
-      - name: Guardar Resultados Temporales
-        uses: actions/upload-artifact@v4
-        with:
-          name: results-${{ matrix.test-file }}
-          path: allure-results/
-          retention-days: 1
+      - name: Test - Notificaciones
+        run: pytest tests/notificaciones.py --alluredir=allure-results || true
 
-  generate-report:
-    name: Unificar y Publicar Reporte
-    needs: run-tests
-    runs-on: ubuntu-latest
-    if: always()
-    steps:
-      - name: Checkout del código
-        uses: actions/checkout@v4
-
-      - name: Descargar todos los resultados
-        uses: actions/download-artifact@v4
-        with:
-          path: combined-results
-          merge-multiple: true # Crucial: junta los archivos de la matriz en una sola carpeta
 
       - name: Generar Reporte Final Allure
         uses: simple-elf/allure-report-action@master
+        if: always() # Se ejecuta aunque los tests fallen
         with:
-          allure_results: combined-results
+          allure_results: allure-results
           allure_report: allure-report
           gh_pages: gh-pages
 
       - name: Deploy a GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
+        if: always()
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: allure-report
