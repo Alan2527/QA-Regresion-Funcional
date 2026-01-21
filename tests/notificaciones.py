@@ -11,23 +11,27 @@ def test_configuracion_notificaciones(driver):
         driver.get(url)
         wait = WebDriverWait(driver, 25)
         
-        # Intentamos con la clase que me diste: font__action
-        # Si falla, el XPath de respaldo es: //*[@id="fusion-app"]/header/div/div[1]/div/button
-        boton = wait.until(EC.element_to_be_clickable((By.CLASS_NAME, "font__action")))
+        # 1. Click en la campana (font__action)
+        # Según tus capturas, este es el primer paso
+        boton_campana = wait.until(EC.element_to_be_clickable((By.CLASS_NAME, "font__action")))
+        driver.execute_script("arguments[0].click();", boton_campana)
         
-        # Click por JavaScript para evitar bloqueos de capas invisibles
-        driver.execute_script("arguments[0].click();", boton)
+        # 2. Click en el botón azul "Activá las notificaciones" del cartel blanco
+        # Usamos el texto del botón que se ve en tu captura
+        selector_activar = "//button[contains(text(), 'Activá las notificaciones')]"
+        boton_activar = wait.until(EC.element_to_be_clickable((By.XPATH, selector_activar)))
+        driver.execute_script("arguments[0].click();", boton_activar)
         
-        # Tiempo para que el dropdown se despliegue
+        # Tiempo para que carguen los switches de temas
         time.sleep(2)
         
-        # Validamos que algo haya pasado (puedes ajustar este assert)
+        # Validamos que se cargó el listado (opcional)
         assert True
         
     finally:
-        # Captura final con el menú abierto
+        # CAPTURA FINAL: Ahora sí con los temas para elegir
         allure.attach(
             driver.get_screenshot_as_png(), 
-            name="Captura_Notificaciones", 
+            name="Captura_Temas_Notificaciones", 
             attachment_type=allure.attachment_type.PNG
         )
