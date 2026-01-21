@@ -10,18 +10,21 @@ def test_configuracion_notificaciones(driver):
     try:
         driver.get(url)
         wait = WebDriverWait(driver, 30)
-        
-        # Forzar el click por JS si el botón está tapado por ads
-        # Cambia 'CLASE_BOTON' por la clase real de la campana/dropdown
-        boton = wait.until(EC.element_to_be_clickable((By.CLASS_NAME, "CLASE_BOTON")))
+
+        # Usamos la clase "font__action" que me pasaste
+        # También podrías usar el XPath: '//*[@id="fusion-app"]/header/div/div[1]/div/button'
+        selector_campana = ".font__action"
+        boton = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, selector_campana)))
+
+        # Forzamos el clic por JS para que sea infalible contra anuncios
         driver.execute_script("arguments[0].click();", boton)
-        
-        time.sleep(1.5) # Espera mínima para que el dropdown se dibuje
-        
-        # CAPTURA INMEDIATA
-        allure.attach(driver.get_screenshot_as_png(), name="Dropdown_Notif", attachment_type=allure.attachment_type.PNG)
-        
+
+        # Espera necesaria para que la animación del dropdown termine antes de la foto
+        time.sleep(2) 
+
+        # CAPTURA FINAL: Ahora sí con el menú desplegado
+        allure.attach(driver.get_screenshot_as_png(), name="Dropdown_Notif_Abierto", attachment_type=allure.attachment_type.PNG)
+
     except Exception as e:
-        # Si falla el click, saca captura del error para ver qué lo tapa
-        allure.attach(driver.get_screenshot_as_png(), name="Error_Notif", attachment_type=allure.attachment_type.PNG)
+        allure.attach(driver.get_screenshot_as_png(), name="Error_Notificaciones", attachment_type=allure.attachment_type.PNG)
         pytest.fail(f"No se pudo abrir el dropdown: {e}")
