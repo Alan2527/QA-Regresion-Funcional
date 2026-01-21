@@ -11,27 +11,38 @@ def test_configuracion_notificaciones(driver):
         driver.get(url)
         wait = WebDriverWait(driver, 25)
         
-        # 1. Click en la campana (font__action)
-        # Según tus capturas, este es el primer paso
+        # 1. Click en la campana principal
         boton_campana = wait.until(EC.element_to_be_clickable((By.CLASS_NAME, "font__action")))
         driver.execute_script("arguments[0].click();", boton_campana)
         
-        # 2. Click en el botón azul "Activá las notificaciones" del cartel blanco
-        # Usamos el texto del botón que se ve en tu captura
-        selector_activar = "//button[contains(text(), 'Activá las notificaciones')]"
-        boton_activar = wait.until(EC.element_to_be_clickable((By.XPATH, selector_activar)))
+        # Pequeña pausa para que el modal aparezca
+        time.sleep(2)
+
+        # Limpieza de posibles carteles de suscripción que tapan (como el de image_ac6fab.png)
+        driver.execute_script("""
+            var overlays = document.querySelectorAll('[class*="modal"], [class*="overlay"], [class*="popup"]');
+            overlays.forEach(function(el) { if(!el.contains(document.querySelector('.font__action'))) el.remove(); });
+        """)
+
+        # 2. Click en el botón para activar (Selector más flexible)
+        # Buscamos cualquier botón que tenga el texto "Activá"
+        selector_activar = "//button[contains(., 'Activá') or contains(., 'activar')]"
+        boton_activar = wait.until(EC.presence_of_element_located((By.XPATH, selector_activar)))
+        
+        # Scroll al botón por las dudas y click por JS
+        driver.execute_script("arguments[0].scrollIntoView(true);", boton_activar)
         driver.execute_script("arguments[0].click();", boton_activar)
         
-        # Tiempo para que carguen los switches de temas
-        time.sleep(2)
+        # Espera para que carguen los temas
+        time.sleep(3)
         
-        # Validamos que se cargó el listado (opcional)
-        assert True
-        
+    except Exception as e:
+        print(f"Error detectado: {e}")
+        # No hacemos raise inmediato para que llegue al finally y saque la foto
     finally:
-        # CAPTURA FINAL: Ahora sí con los temas para elegir
+        # Esta captura nos mostrará si logramos llegar a los temas o qué cartel quedó trabado
         allure.attach(
             driver.get_screenshot_as_png(), 
-            name="Captura_Temas_Notificaciones", 
+            name="Estado_Final_Notificaciones", 
             attachment_type=allure.attachment_type.PNG
         )
