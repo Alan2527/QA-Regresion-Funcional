@@ -1,4 +1,4 @@
-name: QA Regression Suite 🚀
+name: QA Regression Suite
 
 on:
   push:
@@ -6,78 +6,44 @@ on:
   workflow_dispatch:
 
 jobs:
-  test-masleidas:
-    name: Ejecutar Componente (masleidas.py)
+  test-suite:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Configurar Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.10'
-      - name: Instalar dependencias
-        run: pip install -r requirements.txt
-      - name: Correr Test Mas Leidas
-        run: pytest tests/masleidas.py --alluredir=allure-results || true
-      - name: Subir resultados parciales
-        uses: actions/upload-artifact@v4
-        with:
-          name: results-masleidas
-          path: allure-results/
-          retention-days: 1
-
-  test-notificaciones:
-    name: Ejecutar Componente (notificaciones.py)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Configurar Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.10'
-      - name: Instalar dependencias
-        run: pip install -r requirements.txt
-      - name: Correr Test Notificaciones
-        run: pytest tests/notificaciones.py --alluredir=allure-results || true
-      - name: Subir resultados parciales
-        uses: actions/upload-artifact@v4
-        with:
-          name: results-notificaciones
-          path: allure-results/
-          retention-days: 1
-
-  reporte-final:
-    name: Generar Reporte Unificado
-    needs: [test-masleidas, test-notificaciones]
-    runs-on: ubuntu-latest
-    if: always() # Se ejecuta aunque los tests fallen
-    steps:
-      - uses: actions/checkout@v4
-      - name: Descargar todos los resultados
-        uses: actions/download-artifact@v4
-        with:
-          path: combined-results
-          merge-multiple: true
-
-      - name: Get Allure history
+      - name: Checkout del código
         uses: actions/checkout@v4
-        if: always()
-        continue-on-error: true
-        with:
-          ref: gh-pages
-          path: gh-pages
 
-      - name: Allure Report action
+      - name: Configurar Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Instalar dependencias
+        run: |
+          pip install -r requirements.txt
+
+      - name: Ejecutar Tests
+        # El "|| true" evita que el workflow se detenga si un test falla, 
+        # permitiendo que el reporte se genere igual.
+        run: |
+          pytest tests/masleidas.py tests/notificaciones.py --alluredir=allure-results || true
+
+      - name: Generar carpeta con Fecha y Hora
+        run: |
+          # Creamos una variable con formato legible: Año-Mes-Día_Hora-Min
+          echo "REPORT_DATE=$(date +'%Y-%m-%d_%H-%M')" >> $GITHUB_ENV
+
+      - name: Generar Reporte Allure
         uses: simple-elf/allure-report-action@master
         if: always()
         with:
-          allure_results: combined-results
+          allure_results: allure-results
           allure_history: allure-history
-          keep_histories: 20
+          keep_histories: 1 # Esto borra el historial anterior para que no pese
 
-      - name: Deploy report to Github Pages
-        if: always()
+      - name: Desplegar a GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
+        if: always()
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: allure-history
+          force_orphan: true # Esto limpia la rama gh-pages y sube solo lo nuevo
