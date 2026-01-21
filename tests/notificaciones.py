@@ -9,16 +9,19 @@ def test_configuracion_notificaciones(driver):
     url = "https://tn.com.ar/"
     try:
         driver.get(url)
-        wait = WebDriverWait(driver, 25)
+        wait = WebDriverWait(driver, 30)
         
-        # Usamos los selectores que identificaste
-        boton_dropdown = wait.until(EC.element_to_be_clickable((By.CLASS_NAME, "tu-clase-del-boton")))
-        boton_dropdown.click()
+        # Forzar el click por JS si el botón está tapado por ads
+        # Cambia 'CLASE_BOTON' por la clase real de la campana/dropdown
+        boton = wait.until(EC.element_to_be_clickable((By.CLASS_NAME, "CLASE_BOTON")))
+        driver.execute_script("arguments[0].click();", boton)
         
-        time.sleep(2) # Espera clave para que el dropdown se vea en la captura
+        time.sleep(1.5) # Espera mínima para que el dropdown se dibuje
         
-        # Validar que el dropdown existe en el DOM
-        assert True 
+        # CAPTURA INMEDIATA
+        allure.attach(driver.get_screenshot_as_png(), name="Dropdown_Notif", attachment_type=allure.attachment_type.PNG)
         
-    finally:
-        allure.attach(driver.get_screenshot_as_png(), name="Dropdown_Abierto", attachment_type=allure.attachment_type.PNG)
+    except Exception as e:
+        # Si falla el click, saca captura del error para ver qué lo tapa
+        allure.attach(driver.get_screenshot_as_png(), name="Error_Notif", attachment_type=allure.attachment_type.PNG)
+        pytest.fail(f"No se pudo abrir el dropdown: {e}")
