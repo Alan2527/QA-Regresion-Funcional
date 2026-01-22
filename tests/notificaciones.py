@@ -11,44 +11,43 @@ def test_configuracion_notificaciones(driver):
         driver.get(url)
         wait = WebDriverWait(driver, 25)
         
-        # 1. Click en la campana principal
+        # 1. Primer Click en la campana para abrir
         boton_campana = wait.until(EC.element_to_be_clickable((By.CLASS_NAME, "font__action")))
         driver.execute_script("arguments[0].click();", boton_campana)
         
-        # 2. Click en el botón azul "Activá las notificaciones"
+        # 2. Click en "Activá las notificaciones" (el botón del modal)
         selector_activar = "//button[contains(., 'Activá')]"
         boton_activar = wait.until(EC.element_to_be_clickable((By.XPATH, selector_activar)))
         driver.execute_script("arguments[0].click();", boton_activar)
 
-        # 3. Esperar a que el panel de temas esté presente
+        # 3. Activar los 10 switches con tus XPaths exactos
         wait.until(EC.presence_of_element_located((By.CLASS_NAME, "toggle-switch")))
-        
-        # --- ACTIVACIÓN DE LOS 10 SWITCHES ---
-        # Usamos la estructura de XPath que me pasaste para los 10 elementos
         for i in range(1, 11):
             try:
-                # Construimos el XPath dinámico para el span (slider)
                 xpath_span = f'//*[@id="fusion-app"]/header/div/div[1]/div[2]/div[1]/div[2]/div/div/div[2]/div[{i}]/label/span'
-                
-                # Buscamos el elemento
                 span_slider = driver.find_element(By.XPATH, xpath_span)
-                
-                # Forzamos el click por JavaScript para que cambie el estado
                 driver.execute_script("arguments[0].click();", span_slider)
-                
-                # Breve pausa entre clicks para que la web no se bloquee
-                time.sleep(0.5)
-            except Exception as e:
-                print(f"No se pudo activar el switch {i}: {e}")
+                time.sleep(0.3) # Breve pausa entre activaciones
+            except:
                 continue
 
-        # Pausa final para que todos los switches terminen su animación a azul
-        time.sleep(4)
+        # --- VALIDACIÓN DE PERSISTENCIA ---
+        
+        # 4. Segundo Click en la campana para CERRAR el dropdown
+        driver.execute_script("arguments[0].click();", boton_campana)
+        time.sleep(2) # Espera a que la animación de cierre termine
+        
+        # 5. Tercer Click en la campana para REABRIR y verificar
+        driver.execute_script("arguments[0].click();", boton_campana)
+        
+        # Esperamos a que los elementos del panel vuelvan a estar visibles
+        wait.until(EC.visibility_of_element_located((By.CLASS_NAME, "toggle-switch")))
+        time.sleep(2) # Pausa para asegurar que los colores (azul) se rendericen bien
         
     finally:
-        # La captura ahora mostrará los 10 switches activados (en azul)
+        # CAPTURA FINAL: Muestra el estado tras cerrar y reabrir
         allure.attach(
             driver.get_screenshot_as_png(), 
-            name="Captura_TOTAL_TEMAS_AZULES", 
+            name="Captura_Final_Persistencia", 
             attachment_type=allure.attachment_type.PNG
         )
