@@ -6,29 +6,40 @@ from selenium.webdriver.chrome.options import Options
 def driver():
     options = Options()
     
-    # --- MODO HUMANO (Para el Login) ---
+    # --- 1. CONFIGURACIÓN DE IDENTIDAD (Anti-Bot) ---
+    # Usamos el modo headless "new", que es casi imposible de detectar
     options.add_argument("--headless=new") 
+    
+    # Ocultamos que el navegador es controlado por Selenium
     options.add_argument("--disable-blink-features=AutomationControlled")
     options.add_experimental_option("excludeSwitches", ["enable-automation"])
     options.add_experimental_option('useAutomationExtension', False)
     
-    # --- ESTABILIDAD ---
+    # User-agent de un Chrome real en Windows para que TN no sospeche
+    options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36")
+
+    # --- 2. CONFIGURACIÓN DE ESTABILIDAD ---
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--window-size=1920,1080")
-    # Identidad de navegador real
-    options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
     
     driver = webdriver.Chrome(options=options)
     
-    # --- VELOCIDAD (Para todos los tests) ---
+    # --- 3. VELOCIDAD (Bloqueo de recursos pesados) ---
+    # Bloqueamos imágenes y trackers, pero dejamos pasar CSS y fuentes para que se vea bien
     driver.execute_cdp_cmd("Network.setBlockedURLs", {
-        "urls": ["*.jpg", "*.jpeg", "*.png", "*.gif", "*.webp", "*google-analytics.com*", "*doubleclick.net*", "*ads*", "*video*"]
+        "urls": [
+            "*.jpg", "*.jpeg", "*.png", "*.gif", "*.webp", 
+            "*google-analytics.com*", "*doubleclick.net*", 
+            "*ads*", "*video*", "*metrics*"
+        ]
     })
     driver.execute_cdp_cmd("Network.enable", {})
     
-    # Parche final para ocultar a Selenium
+    # --- 4. PARCHE FINAL DE JAVASCRIPT ---
+    # Borramos el rastro de la propiedad 'navigator.webdriver'
     driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
     
     yield driver
+    
     driver.quit()
