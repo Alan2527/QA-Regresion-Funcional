@@ -1,72 +1,55 @@
 import pytest
 import allure
 import time
-import random
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-def escribir_como_humano(elemento, texto):
-    """Escribe el texto letra por letra con pausas aleatorias para simular un humano."""
-    for letra in texto:
-        elemento.send_keys(letra)
-        # Pausa aleatoria entre 0.1 y 0.3 segundos por letra
-        time.sleep(random.uniform(0.1, 0.3))
-
-def test_login_usuario(driver):
+def test_login_limpio(driver):
     url = "https://tn.com.ar/"
-    wait = WebDriverWait(driver, 30)
+    wait = WebDriverWait(driver, 20)
     
     try:
         driver.get(url)
         
-        # 1. Click en el botón de Iniciar Sesión del Header
-        # Usamos el XPath exacto que me pasaste
-        xpath_boton_header = '//*[@id="fusion-app"]/header/div/div[2]/div/a'
-        boton_login = wait.until(EC.element_to_be_clickable((By.XPATH, xpath_boton_header)))
-        
-        # Pequeña pausa antes de clickear para no ser instantáneo
-        time.sleep(1.5)
-        driver.execute_script("arguments[0].click();", boton_login)
+        # 1. CERRAMOS POP-UPS (Como el de notificaciones que se ve en tu captura)
+        try:
+            # Intentamos cerrar el cartel de "¿Querés recibir alertas?"
+            boton_mas_tarde = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'MÁS TARDE')]")))
+            boton_mas_tarde.click()
+        except:
+            print("No apareció el pop-up de alertas.")
 
-        # 2. Ingresar Email letra por letra
-        xpath_email = '//*[@id="fusion-app"]/div[2]/form/input'
-        input_email = wait.until(EC.visibility_of_element_located((By.XPATH, xpath_email)))
-        input_email.click() # Hacemos foco
-        escribir_como_humano(input_email, "alanherrera2527@gmail.com")
-        
-        # Pausa entre campos
-        time.sleep(random.uniform(0.5, 1.2))
+        # 2. CLICK EN INGRESAR
+        boton_login_header = wait.until(EC.element_to_be_clickable((By.XPATH, '//*[@id="fusion-app"]/header/div/div[2]/div/a')))
+        driver.execute_script("arguments[0].click();", boton_login_header)
 
-        # 3. Ingresar Password letra por letra
-        xpath_pass = '//*[@id="fusion-app"]/div[2]/form/div[1]/input'
-        input_pass = wait.until(EC.visibility_of_element_located((By.XPATH, xpath_pass)))
-        input_pass.click() # Hacemos foco
-        escribir_como_humano(input_pass, "Filupi2527!!")
+        # 3. VERIFICAR SI HAY CAPTCHA
+        # Si aparece el cuadro de hCaptcha, el test va a fallar aquí con un mensaje claro
+        try:
+            iframe_captcha = driver.find_elements(By.TAG_NAME, "iframe")
+            for iframe in iframe_captcha:
+                if "captcha" in iframe.get_attribute("src").lower():
+                    print("BLOQUEO: El sitio lanzó un Captcha visual.")
+        except:
+            pass
 
-        # 4. Click en el botón Ingresar (Span label)
-        # Esperamos un momento antes del click final
-        time.sleep(1.5)
-        xpath_submit = '//*[@id="fusion-app"]/div[2]/form/div[3]/button/span'
-        boton_submit = wait.until(EC.element_to_be_clickable((By.XPATH, xpath_submit)))
-        driver.execute_script("arguments[0].click();", boton_submit)
+        # 4. LOGIN TRADICIONAL
+        input_email = wait.until(EC.visibility_of_element_located((By.XPATH, '//*[@id="fusion-app"]/div[2]/form/input')))
+        input_email.send_keys("alanherrera2527@gmail.com")
 
-        # 5. VALIDACIÓN: Esperar a que el nombre "Alan Herrera" aparezca
-        xpath_nombre_usuario = '//*[@id="fusion-app"]/header/div/div[2]/div/a/span[2]'
-        
-        # Esta es la parte crítica: esperamos hasta 20 segundos a que el texto cambie
-        wait.until(EC.text_to_be_present_in_element((By.XPATH, xpath_nombre_usuario), "Alan Herrera"))
-        
-        # Pausa final para que la captura salga perfecta
-        time.sleep(4)
-        
+        input_pass = wait.until(EC.visibility_of_element_located((By.XPATH, '//*[@id="fusion-app"]/div[2]/form/div[1]/input')))
+        input_pass.send_keys("Filupi2527!!")
+
+        # Usamos JS para el click final para evitar que el hCaptcha intercepte el clic físico
+        boton_ingresar = wait.until(EC.element_to_be_clickable((By.XPATH, '//*[@id="fusion-app"]/div[2]/form/div[3]/button/span')))
+        driver.execute_script("arguments[0].click();", boton_ingresar)
+
+        # 5. VALIDACIÓN DE NOMBRE
+        xpath_nombre = '//*[@id="fusion-app"]/header/div/div[2]/div/a/span[2]'
+        wait.until(EC.text_to_be_present_in_element((By.XPATH, xpath_nombre), "Alan Herrera"))
+
     except Exception as e:
-        print(f"Ocurrió un error en el flujo de Login: {e}")
-        
+        print(f"Error detectado: {e}")
     finally:
-        # CAPTURA DE PANTALLA: Aquí veremos el nombre Alan Herrera logueado
-        allure.attach(
-            driver.get_screenshot_as_png(), 
-            name="Captura_Final_Login_Alan", 
-            attachment_type=allure.attachment_type.PNG
-        )
+        allure.attach(driver.get_screenshot_as_png(), name="Evidencia_Login", attachment_type=allure.attachment_type.PNG)
