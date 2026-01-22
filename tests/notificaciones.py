@@ -20,7 +20,7 @@ def test_configuracion_notificaciones(driver):
         boton_activar = wait.until(EC.element_to_be_clickable((By.XPATH, selector_activar)))
         driver.execute_script("arguments[0].click();", boton_activar)
 
-        # 3. ACTIVACIÓN de los 10 switches
+        # 3. Activar los 10 switches
         wait.until(EC.presence_of_element_located((By.CLASS_NAME, "toggle-switch")))
         for i in range(1, 11):
             try:
@@ -28,39 +28,28 @@ def test_configuracion_notificaciones(driver):
                 span_slider = driver.find_element(By.XPATH, xpath_span)
                 driver.execute_script("arguments[0].click();", span_slider)
                 time.sleep(0.3)
-            except:
-                continue
+            except: continue
 
-        # --- CICLO DE VALIDACIÓN ---
-        
-        # 4. CERRAR (Haciendo click en la campana de nuevo)
+        # --- VALIDACIÓN DE PERSISTENCIA ---
+        # 4. CERRAR
         campana_cierre = wait.until(EC.element_to_be_clickable((By.CLASS_NAME, "font__action")))
         driver.execute_script("arguments[0].click();", campana_cierre)
-        
-        # Esperamos a que el dropdown desaparezca de la vista
         time.sleep(2)
         
-        # 5. REABRIR (Click final en la campana)
+        # 5. REABRIR
         campana_reabrir = wait.until(EC.element_to_be_clickable((By.CLASS_NAME, "font__action")))
         driver.execute_script("arguments[0].click();", campana_reabrir)
         
-        # 6. ESPERA DE VALIDACIÓN: 
-        # En lugar de solo esperar la clase, esperamos que el contenedor de temas sea visible
-        # Esto nos asegura que la captura se tome con el panel ya desplegado.
+        # 6. ESPERA PARA RENDERIZADO ESTÉTICO
+        # Esperamos a que los elementos estén visibles y damos un tiempo extra
+        # para que el navegador aplique los estilos CSS y las fuentes.
         wait.until(EC.visibility_of_any_elements_located((By.CLASS_NAME, "notification-setting-item")))
-        
-        # Un pequeño delay para que el color azul de los switches termine de cargar en el render
-        time.sleep(3)
-        
-    except Exception as e:
-        # Si algo falla, lo imprimimos pero dejamos que el finally saque la captura
-        print(f"Error en el flujo: {e}")
+        time.sleep(4) # Tiempo clave para que el "azul" del switch sea sólido
         
     finally:
-        # ESTA ES LA CAPTURA QUE NECESITÁS: 
-        # Debe mostrar los temas y sus estados (deberían estar en azul)
+        # Forzamos una captura de pantalla completa para ver los estilos aplicados
         allure.attach(
             driver.get_screenshot_as_png(), 
-            name="Captura_Final_Validacion_Azules", 
+            name="Captura_Final_Estilos_Originales", 
             attachment_type=allure.attachment_type.PNG
         )
