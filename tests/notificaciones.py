@@ -15,34 +15,28 @@ def test_configuracion_notificaciones(driver):
         boton_campana = wait.until(EC.element_to_be_clickable((By.CLASS_NAME, "font__action")))
         driver.execute_script("arguments[0].click();", boton_campana)
         
-        # Pequeña pausa para que el modal aparezca
-        time.sleep(2)
-
-        # Limpieza de posibles carteles de suscripción que tapan (como el de image_ac6fab.png)
-        driver.execute_script("""
-            var overlays = document.querySelectorAll('[class*="modal"], [class*="overlay"], [class*="popup"]');
-            overlays.forEach(function(el) { if(!el.contains(document.querySelector('.font__action'))) el.remove(); });
-        """)
-
-        # 2. Click en el botón para activar (Selector más flexible)
-        # Buscamos cualquier botón que tenga el texto "Activá"
-        selector_activar = "//button[contains(., 'Activá') or contains(., 'activar')]"
-        boton_activar = wait.until(EC.presence_of_element_located((By.XPATH, selector_activar)))
-        
-        # Scroll al botón por las dudas y click por JS
-        driver.execute_script("arguments[0].scrollIntoView(true);", boton_activar)
+        # 2. Click en el botón azul "Activá las notificaciones"
+        selector_activar = "//button[contains(., 'Activá')]"
+        boton_activar = wait.until(EC.element_to_be_clickable((By.XPATH, selector_activar)))
         driver.execute_script("arguments[0].click();", boton_activar)
+
+        # --- PASO CLAVE PARA LA CAPTURA ---
+        # Esperamos a que el cartel de bienvenida DESAPAREZCA (para evitar el Stale Element)
+        wait.until(EC.invisibility_of_element_located((By.XPATH, selector_activar)))
         
-        # Espera para que carguen los temas
-        time.sleep(3)
+        # Esperamos a que aparezca el contenedor de temas (los switches)
+        # En TN, estos suelen tener la clase 'column-list' o similar dentro del modal
+        wait.until(EC.presence_of_element_located((By.CLASS_NAME, "notification-setting-item")))
+        
+        # Una pequeña pausa extra para que la animación del switch termine
+        time.sleep(2)
         
     except Exception as e:
         print(f"Error detectado: {e}")
-        # No hacemos raise inmediato para que llegue al finally y saque la foto
     finally:
-        # Esta captura nos mostrará si logramos llegar a los temas o qué cartel quedó trabado
+        # Ahora la captura se toma solo cuando los temas ya están cargados
         allure.attach(
             driver.get_screenshot_as_png(), 
-            name="Estado_Final_Notificaciones", 
+            name="Captura_Temas_Activos", 
             attachment_type=allure.attachment_type.PNG
         )
