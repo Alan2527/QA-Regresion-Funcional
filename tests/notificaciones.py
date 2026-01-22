@@ -20,23 +20,30 @@ def test_configuracion_notificaciones(driver):
         boton_activar = wait.until(EC.element_to_be_clickable((By.XPATH, selector_activar)))
         driver.execute_script("arguments[0].click();", boton_activar)
 
-        # --- PASO CLAVE PARA LA CAPTURA ---
-        # Esperamos a que el cartel de bienvenida DESAPAREZCA (para evitar el Stale Element)
-        wait.until(EC.invisibility_of_element_located((By.XPATH, selector_activar)))
-        
-        # Esperamos a que aparezca el contenedor de temas (los switches)
-        # En TN, estos suelen tener la clase 'column-list' o similar dentro del modal
+        # 3. Esperar a que cargue la lista de temas
         wait.until(EC.presence_of_element_located((By.CLASS_NAME, "notification-setting-item")))
         
-        # Una pequeña pausa extra para que la animación del switch termine
-        time.sleep(2)
+        # --- NUEVO: ACTIVACIÓN DE TODOS LOS TEMAS ---
+        # Buscamos todos los elementos de configuración
+        temas = driver.find_elements(By.CLASS_NAME, "notification-setting-item")
+        
+        for tema in temas:
+            try:
+                # Buscamos el switch (input o span) dentro de cada fila y le damos click
+                # Usualmente es un click en la fila misma o en el componente toggle
+                driver.execute_script("arguments[0].click();", tema)
+            except:
+                continue # Si alguno falla, seguimos con el siguiente
+        
+        # Pausa para que el navegador procese los cambios visuales (color azul/verde)
+        time.sleep(3)
         
     except Exception as e:
-        print(f"Error detectado: {e}")
+        print(f"Error durante la activación: {e}")
     finally:
-        # Ahora la captura se toma solo cuando los temas ya están cargados
+        # La captura ahora debería mostrar los switches con color de "Activo"
         allure.attach(
             driver.get_screenshot_as_png(), 
-            name="Captura_Temas_Activos", 
+            name="Captura_Temas_ACTIVADOS", 
             attachment_type=allure.attachment_type.PNG
         )
