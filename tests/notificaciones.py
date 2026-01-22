@@ -20,30 +20,35 @@ def test_configuracion_notificaciones(driver):
         boton_activar = wait.until(EC.element_to_be_clickable((By.XPATH, selector_activar)))
         driver.execute_script("arguments[0].click();", boton_activar)
 
-        # 3. Esperar a que cargue la lista de temas
-        wait.until(EC.presence_of_element_located((By.CLASS_NAME, "notification-setting-item")))
+        # 3. Esperar a que el panel de temas esté presente
+        wait.until(EC.presence_of_element_located((By.CLASS_NAME, "toggle-switch")))
         
-        # --- NUEVO: ACTIVACIÓN DE TODOS LOS TEMAS ---
-        # Buscamos todos los elementos de configuración
-        temas = driver.find_elements(By.CLASS_NAME, "notification-setting-item")
-        
-        for tema in temas:
+        # --- ACTIVACIÓN DE LOS 10 SWITCHES ---
+        # Usamos la estructura de XPath que me pasaste para los 10 elementos
+        for i in range(1, 11):
             try:
-                # Buscamos el switch (input o span) dentro de cada fila y le damos click
-                # Usualmente es un click en la fila misma o en el componente toggle
-                driver.execute_script("arguments[0].click();", tema)
-            except:
-                continue # Si alguno falla, seguimos con el siguiente
+                # Construimos el XPath dinámico para el span (slider)
+                xpath_span = f'//*[@id="fusion-app"]/header/div/div[1]/div[2]/div[1]/div[2]/div/div/div[2]/div[{i}]/label/span'
+                
+                # Buscamos el elemento
+                span_slider = driver.find_element(By.XPATH, xpath_span)
+                
+                # Forzamos el click por JavaScript para que cambie el estado
+                driver.execute_script("arguments[0].click();", span_slider)
+                
+                # Breve pausa entre clicks para que la web no se bloquee
+                time.sleep(0.5)
+            except Exception as e:
+                print(f"No se pudo activar el switch {i}: {e}")
+                continue
+
+        # Pausa final para que todos los switches terminen su animación a azul
+        time.sleep(4)
         
-        # Pausa para que el navegador procese los cambios visuales (color azul/verde)
-        time.sleep(3)
-        
-    except Exception as e:
-        print(f"Error durante la activación: {e}")
     finally:
-        # La captura ahora debería mostrar los switches con color de "Activo"
+        # La captura ahora mostrará los 10 switches activados (en azul)
         allure.attach(
             driver.get_screenshot_as_png(), 
-            name="Captura_Temas_ACTIVADOS", 
+            name="Captura_TOTAL_TEMAS_AZULES", 
             attachment_type=allure.attachment_type.PNG
         )
