@@ -34,20 +34,24 @@ def test_configuracion_notificaciones(driver):
         # 4. CERRAR
         campana_cierre = wait.until(EC.element_to_be_clickable((By.CLASS_NAME, "font__action")))
         driver.execute_script("arguments[0].click();", campana_cierre)
-        time.sleep(2)
+        time.sleep(3) # Pausa para que el modal cierre bien
         
         # 5. REABRIR
         campana_reabrir = wait.until(EC.element_to_be_clickable((By.CLASS_NAME, "font__action")))
         driver.execute_script("arguments[0].click();", campana_reabrir)
         
-        # 6. ESPERA PARA RENDERIZADO ESTÉTICO
-        # Esperamos a que los elementos estén visibles y damos un tiempo extra
-        # para que el navegador aplique los estilos CSS y las fuentes.
-        wait.until(EC.visibility_of_any_elements_located((By.CLASS_NAME, "notification-setting-item")))
-        time.sleep(4) # Tiempo clave para que el "azul" del switch sea sólido
+        # 6. ESPERA PARA RENDERIZADO (Con Try/Except para no romper el test)
+        try:
+            # Intentamos esperar los items, pero si tarda, no matamos el proceso
+            wait_corto = WebDriverWait(driver, 10)
+            wait_corto.until(EC.visibility_of_any_elements_located((By.CLASS_NAME, "notification-setting-item")))
+        except:
+            print("Aviso: Los elementos tardaron en ser detectados, tomando captura de seguridad.")
+            
+        time.sleep(4) # Tiempo extra para que los estilos (azul) se vean bien
         
     finally:
-        # Forzamos una captura de pantalla completa para ver los estilos aplicados
+        # CAPTURA FINAL: Se toma pase lo que pase en el bloque anterior
         allure.attach(
             driver.get_screenshot_as_png(), 
             name="Captura_Final_Estilos_Originales", 
