@@ -4,39 +4,23 @@ from selenium.webdriver.chrome.options import Options
 
 @pytest.fixture(scope="function")
 def driver():
-    # --- CONFIGURACIÓN DE CHROME ---
     options = Options()
-    options.add_argument("--headless=new")  # Modo sin ventana para GitHub Actions
+    options.add_argument("--headless=new")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
-    options.add_argument("--disable-gpu")
-    options.add_argument("--window-size=1280,1000") # Tamaño de ventana fijo para capturas consistentes
+    # Identidad de navegador real para evitar bloqueos
+    options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+    options.add_argument("--disable-blink-features=AutomationControlled")
+    options.add_experimental_option("excludeSwitches", ["enable-automation"])
+    options.add_experimental_option('useAutomationExtension', False)
     
     driver = webdriver.Chrome(options=options)
     
-    # --- BLOQUEO SELECTIVO DE RED (CDP) ---
-    # Bloqueamos solo lo pesado/molesto para que la página sea liviana 
-    # pero conserve los ESTILOS (CSS) y FUENTES para que se vea bien.
+    # Mantener el bloqueo de red para velocidad
     driver.execute_cdp_cmd("Network.setBlockedURLs", {
-        "urls": [
-            # Bloqueamos imágenes pesadas
-            "*.jpg", "*.jpeg", "*.png", "*.gif", "*.webp", "*.svg", 
-            # Bloqueamos trackers y publicidad (lo que suele trabar el sitio)
-            "*google-analytics.com*", "*doubleclick.net*", "*googletagservices.com*",
-            "*facebook.net*", "*twitter.com*", "*ads*", "*metrics*", "*video*",
-            # Bloqueamos otros elementos innecesarios
-            "*.mp4", "*.m4v"
-        ]
+        "urls": ["*.jpg", "*.jpeg", "*.png", "*.gif", "*.webp", "*google-analytics.com*", "*doubleclick.net*", "*ads*", "*video*", "*metrics*"]
     })
     driver.execute_cdp_cmd("Network.enable", {})
     
-    # --- TIMEOUTS DE SEGURIDAD ---
-    # Tiempo máximo para cargar la estructura de la página
-    driver.set_page_load_timeout(45)
-    # Tiempo máximo para que los scripts internos respondan
-    driver.set_script_timeout(15)
-    
     yield driver
-    
-    # --- CIERRE ---
     driver.quit()
