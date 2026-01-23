@@ -65,6 +65,6 @@ def test_configuracion_notificaciones(driver):
     finally:
         allure.attach(
             driver.get_screenshot_as_png(), 
-            name="Captura_Final_Validacion_Azules", 
+            name="Captura_Final_Validacion_Notificaciones", 
             attachment_type=allure.attachment_type.PNG
         )
