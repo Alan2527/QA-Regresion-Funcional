@@ -15,38 +15,41 @@ def test_most_read_component(driver):
         # 1. Localizar contenedor
         xpath_principal = '//*[@id="fusion-app"]/div[9]/aside/div[2]'
         container = wait.until(EC.presence_of_element_located((By.XPATH, xpath_principal)))
+        
+        # Centrar elemento para la foto
         driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", container)
         print("INFO: Componente 'Más Leídas' localizado y centrado.")
-        time.sleep(2)
+        time.sleep(2) # Estabilización para la captura
+
+        # --- CAPTURA DE EVIDENCIA AQUÍ ---
+        allure.attach(
+            driver.get_screenshot_as_png(), 
+            name="Captura_Final_Validacion_MasLeidas", 
+            attachment_type=allure.attachment_type.PNG
+        )
+        print("INFO: Captura de pantalla del ranking adjuntada a Allure.")
         
         # 2. Obtener los enlaces de las noticias
-        # Buscamos los tags 'a' dentro de las historias para obtener las URLs
         stories = container.find_elements(By.CSS_SELECTOR, ".brick_most-read__story a")
-        urls_ranking = [story.get_attribute('href') for story in stories[:5]] # Tomamos las primeras 5
-        print(f"INFO: Se detectaron {len(urls_ranking)} enlaces en el ranking para validar.")
+        urls_ranking = [story.get_attribute('href') for story in stories[:5]]
+        print(f"INFO: Se detectaron {len(urls_ranking)} enlaces para validar navegación.")
 
         # 3. Validar navegación de cada nota
         for idx, url_target in enumerate(urls_ranking, 1):
             print(f"PROBANDO NOTA #{idx}:")
             driver.get(url_target)
             
-            # Esperamos a que la URL cargue
+            # Esperamos a que la URL cargue efectivamente
             wait.until(lambda d: d.current_url == url_target)
             print(f"   - Redirección exitosa a: {driver.current_url}")
             
-            # Volvemos a la nota principal para seguir con la siguiente (o podrías ir directo a la siguiente URL)
-            # Para mayor velocidad en este test, simplemente imprimimos el éxito y seguimos
+            # Un pequeño delay para no saturar el navegador en el loop
             time.sleep(1) 
 
-        print("ÉXITO: Todas las notas del ranking redirigen correctamente.")
+        print("ÉXITO: Todas las notas del ranking fueron probadas y redirigen correctamente.")
         
     except Exception as e:
-        print(f"ERROR: Falló la validación de navegación en Más Leídas: {str(e)}")
+        print(f"ERROR: Falló la validación del componente: {str(e)}")
+        # Captura extra solo si falla para ver el error
+        allure.attach(driver.get_screenshot_as_png(), name="Captura_Error_MasLeidas", attachment_type=allure.attachment_type.PNG)
         raise e
-        
-    finally:
-        allure.attach(
-            driver.get_screenshot_as_png(), 
-            name="Captura_Final_Validacion_MasLeidas", 
-            attachment_type=allure.attachment_type.PNG
-        )
