@@ -16,22 +16,29 @@ def test_share_toolbar_validation(driver):
         # 1. Click en el botón principal de compartir
         xpath_abrir = '//*[@id="fusion-app"]/div[8]/div[1]/main/div[1]/div/div[3]/div/div[2]/div/button'
         boton_share = wait.until(EC.element_to_be_clickable((By.XPATH, xpath_abrir)))
+        
+        # Hacemos scroll y centramos el botón antes de abrirlo
+        driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", boton_share)
+        time.sleep(1)
         driver.execute_script("arguments[0].click();", boton_share)
         print("INFO: Se hizo click en el botón principal de compartir.")
-        time.sleep(2)
 
-        # 2. Captura de pantalla con las opciones desplegadas
+        # --- AJUSTE PARA LA CAPTURA ---
+        # Esperamos a que el primer botón de las opciones (Facebook/X) sea visible
+        xpath_opcion_1 = '//*[@id="fusion-app"]/div[8]/div[1]/main/div[1]/div/div[3]/div/div[2]/div[2]/button[1]'
+        wait.until(EC.visibility_of_element_located((By.XPATH, xpath_opcion_1)))
+        
+        # Pequeña pausa extra para que la animación termine de abrirse
+        time.sleep(2) 
+
         allure.attach(
             driver.get_screenshot_as_png(), 
-            name="Captura_Share_Toolbar_Desplegado", 
+            name="Captura_Share_Toolbar_Abierto", 
             attachment_type=allure.attachment_type.PNG
         )
-        print("INFO: Captura del toolbar desplegado adjuntada.")
+        print("INFO: Captura con el toolbar ABIERTO adjuntada.")
 
-        # Guardamos la ventana principal
-        ventana_principal = driver.current_window_handle
-
-        # 3. XPaths de las opciones de compartir
+        # 2. XPaths de las opciones
         opciones_share = [
             '//*[@id="fusion-app"]/div[8]/div[1]/main/div[1]/div/div[3]/div/div[2]/div[2]/button[1]',
             '//*[@id="fusion-app"]/div[8]/div[1]/main/div[1]/div/div[3]/div/div[2]/div[2]/button[2]',
@@ -40,37 +47,34 @@ def test_share_toolbar_validation(driver):
             '//*[@id="fusion-app"]/div[8]/div[1]/main/div[1]/div/div[3]/div/div[2]/div[2]/button[5]'
         ]
 
+        ventana_principal = driver.current_window_handle
+
+        # 3. Validar cada opción
         for idx, xpath in enumerate(opciones_share, 1):
             boton_opcion = driver.find_element(By.XPATH, xpath)
-            
-            # Click para abrir la red social
             driver.execute_script("arguments[0].click();", boton_opcion)
-            print(f"PROBANDO OPCIÓN DE COMPARTIR #{idx}...")
-
-            # Esperar a que se abra la nueva ventana/pestaña
-            try:
-                wait.until(lambda d: len(d.window_handles) > 1)
-                nueva_ventana = [w for w in driver.window_handles if w != ventana_principal][0]
-                driver.switch_to.window(nueva_ventana)
-                
-                # Loguear la URL de la red social (Facebook, Twitter, etc.)
-                print(f"   - Redirección exitosa. URL: {driver.current_url}")
-                
-                driver.close()
-                driver.switch_to.window(ventana_principal)
-            except:
-                print(f"   - INFO: La opción #{idx} no abrió una ventana externa (puede ser Copiar Link o Email).")
             
-            time.sleep(1)
+            try:
+                # Esperamos un momento para ver si abre ventana
+                time.sleep(1.5)
+                if len(driver.window_handles) > 1:
+                    nueva_ventana = [w for w in driver.window_handles if w != ventana_principal][0]
+                    driver.switch_to.window(nueva_ventana)
+                    print(f"OPCIÓN #{idx}: URL detectada -> {driver.current_url}")
+                    driver.close()
+                    driver.switch_to.window(ventana_principal)
+                else:
+                    print(f"OPCIÓN #{idx}: Se procesó internamente (Copiar link/otros).")
+            except:
+                driver.switch_to.window(ventana_principal)
+                continue
 
-        # 4. Cerrar el toolbar
+        # 4. Cerrar
         xpath_cerrar = '//*[@id="fusion-app"]/div[8]/div[1]/main/div[1]/div/div[3]/div/div[2]/div[1]/div/button'
         boton_cerrar = wait.until(EC.element_to_be_clickable((By.XPATH, xpath_cerrar)))
         driver.execute_script("arguments[0].click();", boton_cerrar)
-        print("INFO: Toolbar de compartir cerrado correctamente.")
-
-        print("ÉXITO: Test de sharetoolbar completado.")
+        print("INFO: Test finalizado y toolbar cerrado.")
 
     except Exception as e:
-        print(f"ERROR: Falló el test de Share Toolbar: {str(e)}")
+        print(f"ERROR: {str(e)}")
         raise e
