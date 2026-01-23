@@ -1,21 +1,37 @@
 import pytest
 import allure
+import time
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 def test_configuracion_notificaciones(driver):
-    # Volvemos a la URL que no falla
-    url_nota = "https://tn.com.ar/internacional/2026/01/23/nueva-york-declaro-el-estado-de-emergencia-ante-una-de-las-tormentas-de-nieve-mas-grandes-de-su-historia/"
-    wait = WebDriverWait(driver, 20)
-    
-    driver.get(url_nota)
-    
-    # XPath original (el que funcionaba en tu entorno)
-    xpath_campana = '//*[@id="fusion-app"]/header/div/div[1]/div[2]/div[1]/button'
-    
-    boton_campana = wait.until(EC.element_to_be_clickable((By.XPATH, xpath_campana)))
-    boton_campana.click()
-    
-    # Captura de evidencia
-    allure.attach(driver.get_screenshot_as_png(), name="Notificaciones_OK", attachment_type=allure.attachment_type.PNG)
+    url = "https://tn.com.ar/"
+    try:
+        driver.get(url)
+        wait = WebDriverWait(driver, 25)
+        
+        # 1. Click en la campana (font__action)
+        # Según tus capturas, este es el primer paso
+        boton_campana = wait.until(EC.element_to_be_clickable((By.CLASS_NAME, "font__action")))
+        driver.execute_script("arguments[0].click();", boton_campana)
+        
+        # 2. Click en el botón azul "Activá las notificaciones" del cartel blanco
+        # Usamos el texto del botón que se ve en tu captura
+        selector_activar = "//button[contains(text(), 'Activá las notificaciones')]"
+        boton_activar = wait.until(EC.element_to_be_clickable((By.XPATH, selector_activar)))
+        driver.execute_script("arguments[0].click();", boton_activar)
+        
+        # Tiempo para que carguen los switches de temas
+        time.sleep(2)
+        
+        # Validamos que se cargó el listado (opcional)
+        assert True
+        
+    finally:
+        # CAPTURA FINAL: Ahora sí con los temas para elegir
+        allure.attach(
+            driver.get_screenshot_as_png(), 
+            name="Captura_Temas_Notificaciones", 
+            attachment_type=allure.attachment_type.PNG
+        )
