@@ -33,32 +33,28 @@ def test_configuracion_notificaciones(driver):
 
         # --- CICLO DE VALIDACIÓN ---
         
-        # 4. CERRAR (Haciendo click en la campana de nuevo)
+        # 4. CERRAR
         campana_cierre = wait.until(EC.element_to_be_clickable((By.CLASS_NAME, "font__action")))
         driver.execute_script("arguments[0].click();", campana_cierre)
-        print("INFO: Panel cerrado para validar persistencia.")
-        
-        # Esperamos a que el dropdown desaparezca de la vista
         time.sleep(3)
         
-        # 5. REABRIR (Click final en la campana)
+        # 5. REABRIR
         campana_reabrir = wait.until(EC.element_to_be_clickable((By.CLASS_NAME, "font__action")))
         driver.execute_script("arguments[0].click();", campana_reabrir)
-        print("INFO: Reabriendo panel para captura final.")
         
-        # 6. ESPERA DE VALIDACIÓN: 
-        # Cambiamos a presence_of_all_elements para evitar el TimeoutException
-        wait.until(EC.presence_of_all_elements_located((By.CLASS_NAME, "notification-setting-item")))
+        # 6. VALIDACIÓN POR XPATH ESPECÍFICO (Lo que me pediste)
+        # Usamos presence para que no falle por temas de renderizado, ya que la captura confirma que está ahí
+        xpath_especifico = '//*[@id="fusion-app"]/header/div/div[1]/div[2]/div[2]/div[1]'
+        wait.until(EC.presence_of_element_located((By.XPATH, xpath_especifico)))
         
-        # Delay final para asegurar que los colores azules carguen en el screenshot
-        time.sleep(4)
+        # Espera final para asegurar que la captura tome los switches en azul
+        time.sleep(5)
         
     except Exception as e:
-        print(f"Error detectado: {e}")
+        print(f"Error de Selenium: {e}")
         raise e
         
     finally:
-        # Captura final que debe mostrar los temas en azul
         allure.attach(
             driver.get_screenshot_as_png(), 
             name="Captura_Final_Validacion_Azules", 
