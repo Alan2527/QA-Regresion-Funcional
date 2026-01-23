@@ -36,27 +36,29 @@ def test_configuracion_notificaciones(driver):
         # 4. CERRAR (Haciendo click en la campana de nuevo)
         campana_cierre = wait.until(EC.element_to_be_clickable((By.CLASS_NAME, "font__action")))
         driver.execute_script("arguments[0].click();", campana_cierre)
+        print("INFO: Panel cerrado para validar persistencia.")
         
         # Esperamos a que el dropdown desaparezca de la vista
-        time.sleep(2)
+        time.sleep(3)
         
         # 5. REABRIR (Click final en la campana)
         campana_reabrir = wait.until(EC.element_to_be_clickable((By.CLASS_NAME, "font__action")))
         driver.execute_script("arguments[0].click();", campana_reabrir)
+        print("INFO: Reabriendo panel para captura final.")
         
         # 6. ESPERA DE VALIDACIÓN: 
-        # En lugar de solo esperar la clase, esperamos que el contenedor de temas sea visible
-        # Esto nos asegura que la captura se tome con el panel ya desplegado.
-        wait.until(EC.visibility_of_any_elements_located((By.CLASS_NAME, "notification-setting-item")))
+        # Cambiamos a presence_of_all_elements para evitar el TimeoutException
+        wait.until(EC.presence_of_all_elements_located((By.CLASS_NAME, "notification-setting-item")))
         
-        # Un pequeño delay para que el color azul de los switches termine de cargar en el render
-        time.sleep(3)
+        # Delay final para asegurar que los colores azules carguen en el screenshot
+        time.sleep(4)
         
-
+    except Exception as e:
+        print(f"Error detectado: {e}")
+        raise e
         
     finally:
-        # ESTA ES LA CAPTURA QUE NECESITÁS: 
-        # Debe mostrar los temas y sus estados (deberían estar en azul)
+        # Captura final que debe mostrar los temas en azul
         allure.attach(
             driver.get_screenshot_as_png(), 
             name="Captura_Final_Validacion_Azules", 
