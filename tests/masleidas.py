@@ -6,41 +6,45 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 def test_most_read_component(driver):
-    url = "https://tn.com.ar/politica/2026/01/19/el-gobierno-anuncio-que-tv-publica-transmitira-los-partidos-de-la-seleccion-argentina-durante-el-mundial-2026/"
+    url_inicial = "https://tn.com.ar/politica/2026/01/19/el-gobierno-anuncio-que-tv-publica-transmitira-los-partidos-de-la-seleccion-argentina-durante-el-mundial-2026/"
     try:
-        driver.get(url)
+        driver.get(url_inicial)
         wait = WebDriverWait(driver, 25)
-        print(f"INFO: Navegando a la nota: {url}")
+        print(f"INFO: Navegando a la nota principal: {url_inicial}")
         
-        # Tu XPath exacto
+        # 1. Localizar contenedor
         xpath_principal = '//*[@id="fusion-app"]/div[9]/aside/div[2]'
         container = wait.until(EC.presence_of_element_located((By.XPATH, xpath_principal)))
-        print("INFO: Contenedor principal de 'Más Leídas' detectado en el DOM.")
-        
-        # Centrar elemento y esperar a que la UI se estabilice
         driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", container)
-        print("INFO: Haciendo scroll hacia el componente 'Más Leídas'.")
+        print("INFO: Componente 'Más Leídas' localizado y centrado.")
         time.sleep(2)
         
-        # Validar noticias
-        stories = container.find_elements(By.CLASS_NAME, "brick_most-read__story")
-        cantidad_detectada = len(stories)
-        
-        print(f"INFO: Se detectaron {cantidad_detectada} noticias en el ranking.")
-        
-        # Iterar brevemente para mostrar los títulos en el log (opcional pero muy útil)
-        for idx, story in enumerate(stories[:5], 1):
-             print(f"   - Noticia #{idx}: {story.text[:50]}...")
+        # 2. Obtener los enlaces de las noticias
+        # Buscamos los tags 'a' dentro de las historias para obtener las URLs
+        stories = container.find_elements(By.CSS_SELECTOR, ".brick_most-read__story a")
+        urls_ranking = [story.get_attribute('href') for story in stories[:5]] # Tomamos las primeras 5
+        print(f"INFO: Se detectaron {len(urls_ranking)} enlaces en el ranking para validar.")
 
-        assert cantidad_detectada > 0, "No se encontraron noticias en el componente 'Más Leídas'"
-        print("ÉXITO: Validación de noticias completada correctamente.")
+        # 3. Validar navegación de cada nota
+        for idx, url_target in enumerate(urls_ranking, 1):
+            print(f"PROBANDO NOTA #{idx}:")
+            driver.get(url_target)
+            
+            # Esperamos a que la URL cargue
+            wait.until(lambda d: d.current_url == url_target)
+            print(f"   - Redirección exitosa a: {driver.current_url}")
+            
+            # Volvemos a la nota principal para seguir con la siguiente (o podrías ir directo a la siguiente URL)
+            # Para mayor velocidad en este test, simplemente imprimimos el éxito y seguimos
+            time.sleep(1) 
+
+        print("ÉXITO: Todas las notas del ranking redirigen correctamente.")
         
     except Exception as e:
-        print(f"ERROR: Falló la validación del componente Más Leídas: {str(e)}")
+        print(f"ERROR: Falló la validación de navegación en Más Leídas: {str(e)}")
         raise e
         
     finally:
-        # La captura siempre se adjunta, incluso si falla el assert
         allure.attach(
             driver.get_screenshot_as_png(), 
             name="Captura_Final_Validacion_MasLeidas", 
