@@ -52,9 +52,7 @@ def test_configuracion_notificaciones(driver):
         # Un pequeño delay para que el color azul de los switches termine de cargar en el render
         time.sleep(3)
         
-    except Exception as e:
-        # Si algo falla, lo imprimimos pero dejamos que el finally saque la captura
-        print(f"Error en el flujo: {e}")
+
         
     finally:
         # ESTA ES LA CAPTURA QUE NECESITÁS: 
