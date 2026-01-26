@@ -27,14 +27,14 @@ def driver():
     
     # --- 3. VELOCIDAD (Bloqueo de recursos pesados) ---
     # Bloqueamos imágenes y trackers, pero dejamos pasar CSS y fuentes para que se vea bien
-    driver.execute_cdp_cmd("Network.setBlockedURLs", {
-        "urls": [
-            "*.jpg", "*.jpeg", "*.png", "*.gif", "*.webp", 
-            "*google-analytics.com*", "*doubleclick.net*", 
-            "*ads*", "*video*", "*metrics*"
-        ]
-    })
-    driver.execute_cdp_cmd("Network.enable", {})
+    #driver.execute_cdp_cmd("Network.setBlockedURLs", {
+     #   "urls": [
+      #      "*.jpg", "*.jpeg", "*.png", "*.gif", "*.webp", 
+       #     "*google-analytics.com*", "*doubleclick.net*", 
+        #    "*ads*", "*video*", "*metrics*"
+        #]
+    #})
+    #driver.execute_cdp_cmd("Network.enable", {})
     
     # --- 4. PARCHE FINAL DE JAVASCRIPT ---
     # Borramos el rastro de la propiedad 'navigator.webdriver'
