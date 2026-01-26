@@ -27,13 +27,23 @@ def test_trinity_audio_player(driver):
         driver.switch_to.frame(trinity_frame)
         print("INFO: Dentro del iframe.")
 
-        # 3. Encontrar el botón de Play/Pause
+        # 3. Encontrar el botón de Trinity
         xpath_play_btn = '//*[@id="app"]/div/div/div/div[1]/button'
         play_btn = wait.until(EC.element_to_be_clickable((By.XPATH, xpath_play_btn)))
         
         # Ejecutamos el Click
         driver.execute_script("arguments[0].click();", play_btn)
-        print("INFO: Click en el botón realizado. Iniciando espera de 30 segundos...")
+        print("INFO: Click en el botón de Trinity realizado. Iniciando espera de 10 segundos...")
+
+        time.sleep(10)
+        
+        # 3.2 Encontrar el botón de Play/Pause
+        xpath_play_btn = '//*[@id="app"]/div/div/div/div[1]/button'
+        play_btn = wait.until(EC.element_to_be_clickable((By.XPATH, xpath_play_btn)))
+        
+        # Ejecutamos el Click
+        driver.execute_script("arguments[0].click();", play_btn)
+        print("INFO: Click en el botón de Play/Pause realizado. Iniciando espera de 30 segundos...")
 
         # 4. ESPERA SOLICITADA
         time.sleep(30)
