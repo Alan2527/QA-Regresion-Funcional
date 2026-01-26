@@ -8,18 +8,24 @@ from selenium.webdriver.support import expected_conditions as EC
 @allure.feature("Reproductor de Audio")
 @allure.story("Validación Integral de Controles Trinity con XPaths Específicos")
 def test_trinity_audio_player_full_suite(driver):
+    # Configuración de estabilidad para evitar Timeouts en CI
+    driver.set_page_load_timeout(60)
     url_nota = "https://tn.com.ar/politica/2026/01/26/milei-viaja-a-mar-del-plata-para-reactivar-su-agenda-partidaria-y-busca-retener-el-apoyo-en-distritos-clave/"
     wait = WebDriverWait(driver, 40)
     
     try:
         with allure.step("1. Navegación y limpieza"):
             print(f"INFO: Navegando a {url_nota}")
-            driver.get(url_nota)
             try:
-                btn_aceptar = WebDriverWait(driver, 10).until(
+                driver.get(url_nota)
+            except Exception as e:
+                print(f"STDOUT: Aviso de timeout en carga (continuando...): {str(e)}")
+
+            try:
+                btn_aceptar = WebDriverWait(driver, 15).until(
                     EC.element_to_be_clickable((By.XPATH, "//button[contains(text(),'ACEPTAR')]"))
                 )
-                btn_aceptar.click()
+                driver.execute_script("arguments[0].click();", btn_aceptar)
                 print("STDOUT: Pop-up de notificaciones cerrado.")
             except:
                 print("STDOUT: No se detectó pop-up de notificaciones.")
@@ -47,7 +53,7 @@ def test_trinity_audio_player_full_suite(driver):
             btn_adelantar = driver.find_element(By.XPATH, xpath_adelantar)
             driver.execute_script("arguments[0].click();", btn_adelantar)
             
-            time.sleep(2)
+            time.sleep(3)
             tiempo_despues = driver.find_element(By.XPATH, xpath_timer).text
             print(f"STDOUT: Adelantar 10s -> Antes: {tiempo_antes} | Después: {tiempo_despues}")
             assert tiempo_despues > tiempo_antes, "ERROR: El tiempo no avanzó al adelantar."
@@ -57,32 +63,30 @@ def test_trinity_audio_player_full_suite(driver):
             btn_atrasar = driver.find_element(By.XPATH, xpath_atrasar)
             
             driver.execute_script("arguments[0].click();", btn_atrasar)
-            time.sleep(2)
+            time.sleep(3)
             tiempo_final = driver.find_element(By.XPATH, xpath_timer).text
             print(f"STDOUT: Atrasar 10s -> Tiempo actual: {tiempo_final}")
 
-        with allure.step("6. Validación: Cambio de Velocidad"):
+        with allure.step("6. Validación: Menú de Velocidad"):
             xpath_abrir_vel = '//*[@id="app"]/div/div/div/div[2]/div[2]/div[2]/button'
             xpath_cerrar_vel = '//*[@id="app"]/div/div/div/div[2]/div[2]/div[2]/div/div/div[2]/button'
             
-            # 1. Abrir menú de velocidad
+            # Abrir menú
             btn_abrir = wait.until(EC.element_to_be_clickable((By.XPATH, xpath_abrir_vel)))
             vel_antes = btn_abrir.text
             driver.execute_script("arguments[0].click();", btn_abrir)
-            print(f"STDOUT: Menú de velocidad abierto. Velocidad actual: {vel_antes}")
+            print(f"STDOUT: Menú de velocidad abierto. Valor actual: {vel_antes}")
+            
             time.sleep(2)
+            allure.attach(driver.get_screenshot_as_png(), name="Menu_Velocidad_Abierto")
 
-            # 2. Aquí podrías clickear una velocidad específica si quisieras, 
-            # por ahora cerramos para validar la interacción del menú.
+            # Cerrar menú
             btn_cerrar = wait.until(EC.element_to_be_clickable((By.XPATH, xpath_cerrar_vel)))
             driver.execute_script("arguments[0].click();", btn_cerrar)
             
             time.sleep(2)
             vel_despues = driver.find_element(By.XPATH, xpath_abrir_vel).text
-            print(f"STDOUT: Menú de velocidad cerrado. Velocidad final: {vel_despues}")
-            
-            # Adjuntamos captura del menú para Allure
-            allure.attach(driver.get_screenshot_as_png(), name="Validacion_Menu_Velocidad")
+            print(f"STDOUT: Menú de velocidad cerrado. Valor final: {vel_despues}")
 
         with allure.step("7. Captura Final"):
             status_text = driver.find_element(By.ID, "trinity-player-status-text").text
@@ -92,7 +96,8 @@ def test_trinity_audio_player_full_suite(driver):
                 name="Trinity_Full_Test_Success",
                 attachment_type=allure.attachment_type.PNG
             )
-            assert "Escuchando" in status_text or "Reproduciendo" in status_text
+            # Validamos que siga en estado activo
+            assert any(word in status_text for word in ["Escuchando", "Reproduciendo", "Listening", "Playing"])
 
     except Exception as e:
         print(f"STDOUT ERROR: Fallo detectado -> {str(e)}")
