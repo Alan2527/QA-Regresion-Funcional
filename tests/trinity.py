@@ -37,8 +37,8 @@ def test_trinity_audio_player(driver):
         print("INFO: Click en el botón realizado.")
 
         # 4. ESPERA SOLICITADA DE 10 SEGUNDOS
-        print("INFO: Esperando 10 segundos para la captura...")
-        time.sleep(10)
+        print("INFO: Esperando 40 segundos para la captura...")
+        time.sleep(40)
 
         # 5. Captura de pantalla
         allure.attach(
