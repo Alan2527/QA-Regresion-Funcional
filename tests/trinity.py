@@ -47,7 +47,7 @@ def test_trinity_audio_player_full_suite(driver):
 
         with allure.step("4. Validación: Adelantar 10 segundos"):
             xpath_adelantar = '//*[@id="app"]/div/div/div/div[2]/div[2]/div[1]/div[2]/button'
-            xpath_timer = '//*[@id="app"]/div/div/div/div[2]/div[4]/div[1]/div'
+            xpath_timer = '//*[@id="app"]/div/div/div/div[2]/div[4]/div[1]'
             
             tiempo_antes = driver.find_element(By.XPATH, xpath_timer).text
             btn_adelantar = driver.find_element(By.XPATH, xpath_adelantar)
