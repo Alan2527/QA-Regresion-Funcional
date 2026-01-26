@@ -22,7 +22,7 @@ def test_shorts_player_full_validation(driver):
         time.sleep(2)
 
         # 2. Click en el PlayIcon (usando el enlace padre para mayor estabilidad)
-        xpath_play = "//*[@id="fusion-app"]/div[12]/main/div[5]/div[1]/div/div/a/div[2]"
+        xpath_play = "//*[@id='fusion-app']/div[12]/main/div[5]/div[1]/div/div/a/div[2]"
         play_btn = wait.until(EC.element_to_be_clickable((By.XPATH, xpath_play)))
         driver.execute_script("arguments[0].click();", play_btn)
         print("INFO: Click en Play realizado.")
