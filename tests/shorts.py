@@ -14,15 +14,14 @@ def test_shorts_player_full_validation(driver):
         print(f"INFO: Navegando a la Home: {url_home}")
 
         # 1. Buscar y scrollear al componente Shorts
-        # Usamos clase para evitar fallos si cambia la posición del div
         xpath_container = "//div[contains(@class, 'brick-shorts__container')]"
         container = wait.until(EC.presence_of_element_located((By.XPATH, xpath_container)))
         driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", container)
         print("INFO: Componente Shorts localizado y centrado.")
         time.sleep(2)
 
-        # 2. Click en el PlayIcon (usando el enlace padre para mayor estabilidad)
-        xpath_play = "//*[@id='fusion-app']/div[12]/main/div[5]/div[1]/div/div/a/div[2]"
+        # 2. Click en el PlayIcon
+        xpath_play = "//div[contains(@class, 'brick-shorts__container')]//a[contains(@class, 'shorts-item')]"
         play_btn = wait.until(EC.element_to_be_clickable((By.XPATH, xpath_play)))
         driver.execute_script("arguments[0].click();", play_btn)
         print("INFO: Click en Play realizado.")
@@ -36,7 +35,7 @@ def test_shorts_player_full_validation(driver):
         xpath_ojo = "//button[contains(@class, 'show-controls--button')]"
         xpath_h2_desc = "//h2[contains(@class, 'shorts-player__description')]"
         
-        btn_ojo = driver.find_element(By.XPATH, xpath_ojo)
+        btn_ojo = wait.until(EC.element_to_be_clickable((By.XPATH, xpath_ojo)))
         driver.execute_script("arguments[0].click();", btn_ojo)
         print("INFO: Click en el 'ojo'. Ocultando controles...")
         wait.until(EC.invisibility_of_element_located((By.XPATH, xpath_h2_desc)))
@@ -86,30 +85,38 @@ def test_shorts_player_full_validation(driver):
         wait.until(EC.url_to_be(url_destino))
         print(f"INFO: Navegación exitosa a la nota: {driver.current_url}")
         
-        # REGRESO Y CAPTURA FINAL PARA ALLURE
+        # REGRESO Y CAPTURA FINAL
         driver.back()
         container = wait.until(EC.presence_of_element_located((By.XPATH, xpath_container)))
         driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", container)
         
-        # Re-abrir para la foto
+        # Re-abrir para la foto (usando JS para evitar bloqueos)
         play_btn_re = wait.until(EC.element_to_be_clickable((By.XPATH, xpath_play)))
         driver.execute_script("arguments[0].click();", play_btn_re)
-        time.sleep(2) # Espera para que el video cargue en la captura
+        time.sleep(2) 
 
         allure.attach(
             driver.get_screenshot_as_png(), 
             name="Captura_Shorts_Reproductor_Activo", 
             attachment_type=allure.attachment_type.PNG
         )
-        print("INFO: Captura de pantalla adjuntada a Allure.")
 
-        # 4.i - Cerrar reproductor
+        # 4.i - Cerrar reproductor (Solución al ElementClickIntercepted)
+        # Removemos el pop-up de OneSignal si existe para limpiar el camino
+        driver.execute_script("""
+            var notification = document.getElementById('onesignal-slidedown-container');
+            if (notification) { notification.remove(); }
+        """)
+        
         xpath_close = "//button[contains(@class, 'shorts-player__close')]"
-        driver.find_element(By.XPATH, xpath_close).click()
+        close_btn = driver.find_element(By.XPATH, xpath_close)
+        # Usamos JS Click aquí para ignorar cualquier otro elemento que flote encima
+        driver.execute_script("arguments[0].click();", close_btn)
+        
         wait.until(EC.invisibility_of_element_located((By.XPATH, xpath_player)))
-        print("ÉXITO: Reproductor cerrado y test finalizado correctamente.")
+        print("ÉXITO: Reproductor cerrado correctamente.")
 
     except Exception as e:
         print(f"ERROR: Falló el test de Shorts: {str(e)}")
-        allure.attach(driver.get_screenshot_as_png(), name="Error_Shorts_Fallback", attachment_type=allure.attachment_type.PNG)
+        allure.attach(driver.get_screenshot_as_png(), name="Error_Shorts_Final", attachment_type=allure.attachment_type.PNG)
         raise e
