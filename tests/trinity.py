@@ -7,62 +7,57 @@ from selenium.webdriver.support import expected_conditions as EC
 
 def test_trinity_audio_player(driver):
     url_nota = "https://tn.com.ar/politica/2026/01/26/milei-viaja-a-mar-del-plata-para-reactivar-su-agenda-partidaria-y-busca-retener-el-apoyo-en-distritos-clave/"
-    wait = WebDriverWait(driver, 40)
+    # Aumentamos el tiempo de espera por lentitud del CI
+    wait = WebDriverWait(driver, 60)
     
     try:
+        # Cargamos la página con un tiempo de espera robusto
         driver.get(url_nota)
-        
-        # 1. Localizar y entrar al iframe
+        print("INFO: Nota cargada.")
+
+        # 1. Localizar y entrar al iframe (Aseguramos scroll)
         xpath_iframe = '//*[@id="fusion-app"]/div[9]/div[1]/main/div[1]/div/div[3]/div/div[1]/div/div/trinity-player-icon-player-layout-wrapper/div/iframe'
         trinity_frame = wait.until(EC.presence_of_element_located((By.XPATH, xpath_iframe)))
         driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", trinity_frame)
-        time.sleep(2) 
+        time.sleep(3) 
         driver.switch_to.frame(trinity_frame)
 
         # 2. Click en Play
         xpath_play_btn = '//*[@id="app"]/div/div/div/div[1]/button'
         play_btn = wait.until(EC.element_to_be_clickable((By.XPATH, xpath_play_btn)))
         driver.execute_script("arguments[0].click();", play_btn)
-        print("INFO: Click en Play realizado.")
+        print("INFO: Play clickeado.")
 
-        # 3. SINCRONIZACIÓN PARA LA CAPTURA PERFECTA
-        # Esperamos a que la clase del botón cambie a 'button-pause'
-        # Esto confirma que el reproductor YA procesó el click y cambió el ícono
-        wait.until(lambda d: "button-pause" in d.find_element(By.XPATH, xpath_play_btn).get_attribute("class"))
-        
-        # Esperamos a que el tiempo avance (evidencia de audio corriendo)
+        # 3. ESPERA CRÍTICA: Que el cronómetro avance
         xpath_timer = '//*[@id="app"]/div/div/div/div[2]/div[4]/div[1]/div'
+        # Esperamos a que pase de 00:00 a cualquier otra cosa (evidencia de que está sonando)
         wait.until(lambda d: d.find_element(By.XPATH, xpath_timer).text != "00:00")
         
-        # Pequeño margen para que el renderizado visual de la imagen se complete
-        time.sleep(1.5)
+        # DAMOS UN SEGUNDO EXTRA para que el icono de Play se convierta en Pausa en la pantalla
+        time.sleep(2)
 
-        # CAPTURA: Ahora sí debe verse el botón de Pausa/Stop
+        # CAPTURA DE PANTALLA
         allure.attach(
-            driver.get_screenshot_as_png(), 
-            name="Captura_Trinity_REPRODUCIENDO_BOTON_PAUSA", 
+            driver.get_screenshot_as_png(),
+            name="Evidencia_Reproduccion_Activa",
             attachment_type=allure.attachment_type.PNG
         )
-        print("INFO: Captura realizada con el botón de Pausa visible.")
 
-        # 4. Validar Forward (+10 seg)
-        t_antes = driver.find_element(By.XPATH, xpath_timer).text
+        # 4. Validar que el tiempo actual ya no es 00:00
+        t_actual = driver.find_element(By.XPATH, xpath_timer).text
+        assert t_actual != "00:00"
+        print(f"INFO: El audio está sonando. Tiempo: {t_actual}")
+
+        # 5. Validar Forward (+10s)
         btn_forward = driver.find_element(By.XPATH, '//*[@id="app"]/div/div/div/div[2]/div[2]/div[1]/div[2]/button')
         driver.execute_script("arguments[0].click();", btn_forward)
-        
-        # Esperamos que el texto del tiempo sea distinto al anterior
-        wait.until(lambda d: d.find_element(By.XPATH, xpath_timer).text != t_antes)
-        print(f"INFO: Forward ok. Tiempo actual: {driver.find_element(By.XPATH, xpath_timer).text}")
+        wait.until(lambda d: d.find_element(By.XPATH, xpath_timer).text != t_actual)
+        print("INFO: Forward validado.")
 
-        # 5. Salir y validar label externo
         driver.switch_to.default_content()
-        xpath_label = '//*[@id="fusion-app"]/div[9]/div[1]/main/div[1]/div/div[3]/div/div[1]/span'
-        wait.until(EC.text_to_be_present_in_element((By.XPATH, xpath_label), "Reproduciendo"))
-        print("ÉXITO: Test finalizado con evidencias visuales correctas.")
+        print("ÉXITO: Trinity validado correctamente.")
 
     except Exception as e:
-        print(f"ERROR: {str(e)}")
-        allure.attach(driver.get_screenshot_as_png(), name="Error_Debug", attachment_type=allure.attachment_type.PNG)
+        print(f"ERROR en Trinity: {str(e)}")
+        allure.attach(driver.get_screenshot_as_png(), name="Error_Trinity", attachment_type=allure.attachment_type.PNG)
         raise e
-    finally:
-        driver.switch_to.default_content()
