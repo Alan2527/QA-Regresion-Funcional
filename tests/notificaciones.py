@@ -31,11 +31,18 @@ def test_configuracion_notificaciones(driver):
         except:
             pass
 
-    # 2. ABRIR CAMPANA (Sin captura)
+    # 2. ABRIR CAMPANA
     with allure.step("2. Abrir menú de notificaciones"):
         # Localizamos y clickeamos la campanita
         boton_campana = wait.until(EC.element_to_be_clickable((By.CLASS_NAME, "font__action")))
         driver.execute_script("arguments[0].click();", boton_campana)
+
+        # Captura antes de activar temas
+        allure.attach(
+            driver.get_screenshot_as_png(), 
+            name="Validacion_Inicial", 
+            attachment_type=allure.attachment_type.PNG
+        )
         
         # Click en "Activá las notificaciones"
         selector_activar = "//button[contains(., 'Activá')]"
@@ -62,7 +69,7 @@ def test_configuracion_notificaciones(driver):
         )
 
     # 4. CICLO DE VALIDACIÓN (Con captura final)
-    with allure.step("4. Validación de persistencia"):
+    with allure.step("4. Validación de notificaciones"):
         # Cerrar
         campana_cierre = wait.until(EC.element_to_be_clickable((By.CLASS_NAME, "font__action")))
         driver.execute_script("arguments[0].click();", campana_cierre)
@@ -80,6 +87,6 @@ def test_configuracion_notificaciones(driver):
         # Captura final del estado del dropdown reabierto
         allure.attach(
             driver.get_screenshot_as_png(), 
-            name="Validacion_Persistencia_Final", 
+            name="Validacion_Notificaciones_Final", 
             attachment_type=allure.attachment_type.PNG
         )
