@@ -21,7 +21,7 @@ def test_share_toolbar_validation(driver):
     wait = WebDriverWait(driver, 25)
     
     # 1. NAVEGACIÓN Y LIMPIEZA
-    with allure.step("1. Navegación y limpieza de popups"):
+    with allure.step("1. Navegación, limpieza de popups y ads"):
         driver.get(url_nota)
         try:
             btn_aceptar = WebDriverWait(driver, 10).until(
@@ -30,8 +30,8 @@ def test_share_toolbar_validation(driver):
         except:
             pass
 
-    # 2. LOCALIZAR Y ABRIR TOOLBAR
-    with allure.step("2. Localizar y abrir Toolbar de compartir"):
+    # 2. LOCALIZAR TOOLBAR
+    with allure.step("2. Localizar Sharetoolbar"):
         xpath_abrir = '//*[@id="fusion-app"]/div[8]/div[1]/main/div[1]/div/div[3]/div/div[2]/div/button'
         boton_share = wait.until(EC.element_to_be_clickable((By.XPATH, xpath_abrir)))
         
@@ -42,7 +42,7 @@ def test_share_toolbar_validation(driver):
         # CAPTURA ANTES DE ABRIR (Como pediste)
         allure.attach(
             driver.get_screenshot_as_png(), 
-            name="Toolbar_Antes_de_Abrir", 
+            name="Sharetoolbar_Antes_de_Abrir", 
             attachment_type=allure.attachment_type.PNG
         )
         
@@ -54,10 +54,10 @@ def test_share_toolbar_validation(driver):
         time.sleep(2)
 
     # 3. CAPTURA TOOLBAR ABIERTO
-    with allure.step("3. Captura de evidencia: Toolbar Abierto"):
+    with allure.step("3. Sharetoolbar Abierto"):
         allure.attach(
             driver.get_screenshot_as_png(), 
-            name="Captura_Share_Toolbar_Abierto", 
+            name="Captura_Sharetoolbar_Abierto", 
             attachment_type=allure.attachment_type.PNG
         )
 
@@ -66,9 +66,9 @@ def test_share_toolbar_validation(driver):
         opciones_share = [
             '//*[@id="fusion-app"]/div[8]/div[1]/main/div[1]/div/div[3]/div/div[2]/div[2]/button[1]', # FB
             '//*[@id="fusion-app"]/div[8]/div[1]/main/div[1]/div/div[3]/div/div[2]/div[2]/button[2]', # X
-            '//*[@id="fusion-app"]/div[8]/div[1]/main/div[1]/div/div[3]/div/div[2]/div[2]/button[3]', # WA
-            '//*[@id="fusion-app"]/div[8]/div[1]/main/div[1]/div/div[3]/div/div[2]/div[2]/button[4]', # Telegram
-            '//*[@id="fusion-app"]/div[8]/div[1]/main/div[1]/div/div[3]/div/div[2]/div[2]/button[5]'  # Copiar
+            '//*[@id="fusion-app"]/div[8]/div[1]/main/div[1]/div/div[3]/div/div[2]/div[2]/button[3]', # Copiar
+            '//*[@id="fusion-app"]/div[8]/div[1]/main/div[1]/div/div[3]/div/div[2]/div[2]/button[4]', # WA
+            '//*[@id="fusion-app"]/div[8]/div[1]/main/div[1]/div/div[3]/div/div[2]/div[2]/button[5]'  # Telegram
         ]
         ventana_principal = driver.current_window_handle
 
