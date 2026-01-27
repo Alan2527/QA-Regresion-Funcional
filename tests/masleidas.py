@@ -40,7 +40,7 @@ def test_most_read_component(driver):
         )
 
     # 4. VALIDACIÓN FINAL
-    with allure.step("4. Validar navegación de títulos"):
+    with allure.step("4. Validar navegación de las notas"):
         titulares = container.find_elements(By.CSS_SELECTOR, "h2.card__headline a")
         urls_ranking = [t.get_attribute('href') for t in titulares[:5]]
         
