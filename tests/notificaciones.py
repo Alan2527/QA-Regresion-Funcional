@@ -36,6 +36,7 @@ def test_configuracion_notificaciones(driver):
         # Localizamos y clickeamos la campanita
         boton_campana = wait.until(EC.element_to_be_clickable((By.CLASS_NAME, "font__action")))
         driver.execute_script("arguments[0].click();", boton_campana)
+        time.sleep(5)
 
         # Captura antes de activar temas
         allure.attach(
