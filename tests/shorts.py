@@ -18,7 +18,7 @@ def test_shorts_player_full_validation(driver):
     wait = WebDriverWait(driver, 25)
     
     # 1. BUSCAR Y SCROLLEAR
-    with allure.step("1. Buscar y scrollear al componente Shorts"):
+    with allure.step("1. Buscar y scrollear al Brick 1 Short"):
         driver.get(url_home)
         # Cierre de popup inicial para limpiar la vista
         try:
@@ -31,7 +31,13 @@ def test_shorts_player_full_validation(driver):
         xpath_container = "//div[contains(@class, 'brick-shorts__container')]"
         container = wait.until(EC.presence_of_element_located((By.XPATH, xpath_container)))
         driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", container)
-        time.sleep(2)
+        time.sleep(4) 
+
+        allure.attach(
+            driver.get_screenshot_as_png(), 
+            name="Captura_Brick_1_Short", 
+            attachment_type=allure.attachment_type.PNG
+        )
 
     # 2. CLICK EN PLAY ICON
     with allure.step("2. Click en el PlayIcon"):
@@ -43,6 +49,13 @@ def test_shorts_player_full_validation(driver):
     with allure.step("3. Validar que el reproductor esté visible"):
         xpath_player = "//div[contains(@class, 'shorts-player__video') and contains(@class, 'active')]"
         wait.until(EC.visibility_of_element_located((By.XPATH, xpath_player)))
+        time.sleep(5) 
+
+        allure.attach(
+            driver.get_screenshot_as_png(), 
+            name="Captura_Reproductor_Activo", 
+            attachment_type=allure.attachment_type.PNG
+        )
 
     # 4. EL OJO (OCULTAR/MOSTRAR)
     with allure.step("4.a y b - El Ojo (Ocultar/Mostrar Controles)"):
@@ -52,9 +65,18 @@ def test_shorts_player_full_validation(driver):
         btn_ojo = wait.until(EC.element_to_be_clickable((By.XPATH, xpath_ojo)))
         driver.execute_script("arguments[0].click();", btn_ojo) # Ocultar
         wait.until(EC.invisibility_of_element_located((By.XPATH, xpath_h2_desc)))
+
+        time.sleep(5) 
+
+        allure.attach(
+            driver.get_screenshot_as_png(), 
+            name="Captura_Ocultar", 
+            attachment_type=allure.attachment_type.PNG
+        )
         
         driver.execute_script("arguments[0].click();", btn_ojo) # Mostrar
         wait.until(EC.visibility_of_element_located((By.XPATH, xpath_h2_desc)))
+
 
     # 5. NAVEGACIÓN (NEXT / PREVIOUS)
     with allure.step("5.c y d - Navegación (Next / Previous)"):
@@ -68,6 +90,13 @@ def test_shorts_player_full_validation(driver):
         desc_actual = driver.find_element(By.XPATH, xpath_h2_desc).text
         driver.find_element(By.XPATH, xpath_prev).click()
         wait.until(lambda d: d.find_element(By.XPATH, xpath_h2_desc).text != desc_actual)
+        time.sleep(5) 
+
+        allure.attach(
+            driver.get_screenshot_as_png(), 
+            name="Captura_Siguiente_Short", 
+            attachment_type=allure.attachment_type.PNG
+        )
 
     # 6. SHARE BUTTON
     with allure.step("6.e - Share Button"):
@@ -76,6 +105,14 @@ def test_shorts_player_full_validation(driver):
         
         driver.find_element(By.XPATH, xpath_share).click()
         wait.until(EC.visibility_of_element_located((By.XPATH, xpath_share_panel)))
+        time.sleep(5) 
+
+        allure.attach(
+            driver.get_screenshot_as_png(), 
+            name="Captura_Share", 
+            attachment_type=allure.attachment_type.PNG
+        )
+        
         driver.find_element(By.XPATH, xpath_share).click() # Cerrar
 
     # 7. MUTE Y FULLSCREEN
@@ -83,13 +120,34 @@ def test_shorts_player_full_validation(driver):
         xpath_mute = "//button[contains(@class, 'mute--button')]"
         xpath_fs = "//button[contains(@class, 'fullscreen--button')]"
         driver.find_element(By.XPATH, xpath_mute).click()
+        time.sleep(5) 
+
+        allure.attach(
+            driver.get_screenshot_as_png(), 
+            name="Captura_Mute", 
+            attachment_type=allure.attachment_type.PNG
+        )
         driver.find_element(By.XPATH, xpath_fs).click()
+        time.sleep(5) 
+
+        allure.attach(
+            driver.get_screenshot_as_png(), 
+            name="Captura_Fs", 
+            attachment_type=allure.attachment_type.PNG
+        )
 
     # 8. LINK DESCRIPCIÓN Y VOLVER
     with allure.step("8.h - Click en el link de la descripción y volver"):
         link_nota = driver.find_element(By.XPATH, f"{xpath_h2_desc}/a")
         url_destino = link_nota.get_attribute('href')
         driver.execute_script("arguments[0].click();", link_nota)
+        time.sleep(5) 
+
+        allure.attach(
+            driver.get_screenshot_as_png(), 
+            name="Captura_Nota_Short", 
+            attachment_type=allure.attachment_type.PNG
+        )
         
         wait.until(EC.url_to_be(url_destino))
         
@@ -101,7 +159,7 @@ def test_shorts_player_full_validation(driver):
         # Re-abrir para la foto
         play_btn_re = wait.until(EC.element_to_be_clickable((By.XPATH, xpath_play)))
         driver.execute_script("arguments[0].click();", play_btn_re)
-        time.sleep(2) 
+        time.sleep(5) 
 
         allure.attach(
             driver.get_screenshot_as_png(), 
