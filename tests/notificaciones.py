@@ -33,7 +33,7 @@ def test_configuracion_notificaciones(driver):
     with allure.step("1. Abrir campana"):
         boton_campana = wait.until(EC.element_to_be_clickable((By.CLASS_NAME, "font__action")))
         driver.execute_script("arguments[0].click();", boton_campana)
-        # Espera de 5 segundos y captura como estaba en tu script original
+        # Espera de 5 segundos
         time.sleep(5)
         allure.attach(
             driver.get_screenshot_as_png(), 
@@ -46,9 +46,16 @@ def test_configuracion_notificaciones(driver):
         selector_activar = "//button[contains(., 'Activá')]"
         boton_activar = wait.until(EC.element_to_be_clickable((By.XPATH, selector_activar)))
         driver.execute_script("arguments[0].click();", boton_activar)
+        # Espera de 5 segundos
+        time.sleep(5)
+        allure.attach(
+            driver.get_screenshot_as_png(), 
+            name="Temas_Desactivados", 
+            attachment_type=allure.attachment_type.PNG
+        )
 
     # 3. ACTIVACIÓN DE LOS 10 SWITCHES
-    with allure.step("3. ACTIVACIÓN de los 10 switches"):
+    with allure.step("3. Activación de los 10 switches"):
         wait.until(EC.presence_of_element_located((By.CLASS_NAME, "toggle-switch")))
         for i in range(1, 11):
             try:
@@ -61,23 +68,23 @@ def test_configuracion_notificaciones(driver):
         # Captura de los switches activados
         allure.attach(
             driver.get_screenshot_as_png(), 
-            name="Switches_Activados", 
+            name="Temas_Activados", 
             attachment_type=allure.attachment_type.PNG
         )
 
     # 4. CERRAR
-    with allure.step("4. CERRAR"):
+    with allure.step("4. Cerrar Dropdown"):
         campana_cierre = wait.until(EC.element_to_be_clickable((By.CLASS_NAME, "font__action")))
         driver.execute_script("arguments[0].click();", campana_cierre)
         time.sleep(3)
         
     # 5. REABRIR
-    with allure.step("5. REABRIR"):
+    with allure.step("5. Reabrir Dropdown"):
         campana_reabrir = wait.until(EC.element_to_be_clickable((By.CLASS_NAME, "font__action")))
         driver.execute_script("arguments[0].click();", campana_reabrir)
         
     # 6. VALIDACIÓN POR XPATH ESPECÍFICO
-    with allure.step("6. VALIDACIÓN POR XPATH ESPECÍFICO"):
+    with allure.step("6. VALIDACIÓN NOTIFICACIONES"):
         xpath_especifico = '//*[@id="fusion-app"]/header/div/div[1]/div[2]/div[2]/div[1]'
         wait.until(EC.presence_of_element_located((By.XPATH, xpath_especifico)))
         # Espera final de 5 segundos para la captura final
