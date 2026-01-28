@@ -89,23 +89,25 @@ def test_shorts_player_full_validation(driver):
         allure.attach(driver.get_screenshot_as_png(), name="Captura_Share", attachment_type=allure.attachment_type.PNG)
         driver.find_element(By.XPATH, xpath_share).click() 
 
-    # 7. MUTE Y FULLSCREEN
-    with allure.step("7.f y g - Mute y Fullscreen"):
+    # 7. MUTE
+    with allure.step("7.f - Mute"):
         driver.find_element(By.XPATH, "//button[contains(@class, 'mute--button')]").click()
         time.sleep(2) 
         allure.attach(driver.get_screenshot_as_png(), name="Captura_Mute", attachment_type=allure.attachment_type.PNG)
         
+    # 8. FULLSCREEN
+        with allure.step("8.g - Fullscreen"):
         driver.find_element(By.XPATH, "//button[contains(@class, 'fullscreen--button')]").click()
         time.sleep(3) 
         allure.attach(driver.get_screenshot_as_png(), name="Captura_Fullscreen", attachment_type=allure.attachment_type.PNG)
 
-    # 8. LINK DESCRIPCIÓN Y VOLVER (CON REINTENTO)
-    with allure.step("8.h - Click en el link de la descripción y volver"):
+    # 9. LINK DESCRIPCIÓN Y VOLVER (CON REINTENTO)
+    with allure.step("9.h - Click en el link de la descripción y volver"):
         link_nota = driver.find_element(By.XPATH, "//h2[contains(@class, 'shorts-player__description')]/a")
         url_destino = link_nota.get_attribute('href')
         driver.execute_script("arguments[0].click();", link_nota)
         
-        time.sleep(5) 
+        time.sleep(3) 
         allure.attach(driver.get_screenshot_as_png(), name="Captura_Nota_Short", attachment_type=allure.attachment_type.PNG)
         wait.until(EC.url_to_be(url_destino))
         
@@ -126,8 +128,8 @@ def test_shorts_player_full_validation(driver):
         time.sleep(8) 
         allure.attach(driver.get_screenshot_as_png(), name="Captura_Shorts_Reproductor_Activo_Final", attachment_type=allure.attachment_type.PNG)
 
-    # 9. CERRAR REPRODUCTOR
-    with allure.step("9.i - Cerrar reproductor"):
+    # 10. CERRAR REPRODUCTOR
+    with allure.step("10.i - Cerrar reproductor"):
         driver.execute_script("var n = document.getElementById('onesignal-slidedown-container'); if(n) n.remove();")
         close_btn = driver.find_element(By.XPATH, "//button[contains(@class, 'shorts-player__close')]")
         driver.execute_script("arguments[0].click();", close_btn)
