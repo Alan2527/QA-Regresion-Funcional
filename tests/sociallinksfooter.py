@@ -42,7 +42,7 @@ def test_social_links_footer(driver):
         "X": '//*[@id="fusion-app"]/footer/div[2]/div[1]/div[1]/div[1]/a[3]',
         "YouTube": '//*[@id="fusion-app"]/footer/div[2]/div[1]/div[1]/div[1]/a[4]',
         "TikTok": '//*[@id="fusion-app"]/footer/div[2]/div[1]/div[1]/div[1]/a[5]',
-        "Telegram"; '//*[@id="fusion-app"]/footer/div[2]/div[1]/div[1]/div[1]/a[6]'
+        "Telegram": '//*[@id="fusion-app"]/footer/div[2]/div[1]/div[1]/div[1]/a[6]'
     }
 
     # 3. CICLO DE VALIDACIÓN CON CAPTURAS
