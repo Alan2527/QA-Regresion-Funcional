@@ -39,11 +39,13 @@ def test_social_links_header(driver):
     # 2. CONFIGURACIÓN DE REDES (Mismo orden que el sitio)
     ventana_principal = driver.current_window_handle
     redes_header = {
-        "Instagram": '//*[@id="fusion-app"]/div[8]/a[1]',
+        "Google": '//*[@id="fusion-app"]/div[8]/a[1]',
         "Facebook": '//*[@id="fusion-app"]/div[8]/a[2]',
-        "X": '//*[@id="fusion-app"]/div[8]/a[3]',
-        "YouTube": '//*[@id="fusion-app"]/div[8]/a[4]',
-        "TikTok": '//*[@id="fusion-app"]/div[8]/a[5]'
+        "TikTok": '//*[@id="fusion-app"]/div[8]/a[3]',
+        "Instagram": '//*[@id="fusion-app"]/div[8]/a[4]',
+        "X": '//*[@id="fusion-app"]/div[8]/a[5]',
+        "YouTube": '//*[@id="fusion-app"]/div[8]/a[6]'
+
     }
 
     # 3. CICLO DE VALIDACIÓN CON CAPTURAS
