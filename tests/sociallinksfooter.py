@@ -37,11 +37,12 @@ def test_social_links_footer(driver):
     # 2. CONFIGURACIÓN DE REDES
     ventana_principal = driver.current_window_handle
     redes_footer = {
-        "Facebook": '//*[@id="fusion-app"]/footer/div[2]/div[1]/div[1]/div[1]/a[1]',
-        "Twitter": '//*[@id="fusion-app"]/footer/div[2]/div[1]/div[1]/div[1]/a[2]',
-        "Instagram": '//*[@id="fusion-app"]/footer/div[2]/div[1]/div[1]/div[1]/a[3]',
+        "Instagram": '//*[@id="fusion-app"]/footer/div[2]/div[1]/div[1]/div[1]/a[1]',
+        "Facebook": '//*[@id="fusion-app"]/footer/div[2]/div[1]/div[1]/div[1]/a[2]',
+        "X": '//*[@id="fusion-app"]/footer/div[2]/div[1]/div[1]/div[1]/a[3]',
         "YouTube": '//*[@id="fusion-app"]/footer/div[2]/div[1]/div[1]/div[1]/a[4]',
-        "RSS": '//*[@id="fusion-app"]/footer/div[2]/div[1]/div[1]/div[1]/a[5]'
+        "TikTok": '//*[@id="fusion-app"]/footer/div[2]/div[1]/div[1]/div[1]/a[5]',
+        "Telegram"; '//*[@id="fusion-app"]/footer/div[2]/div[1]/div[1]/div[1]/a[6]'
     }
 
     # 3. CICLO DE VALIDACIÓN CON CAPTURAS
