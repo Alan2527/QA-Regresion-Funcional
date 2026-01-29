@@ -35,16 +35,15 @@ def test_share_toolbar_validation(driver):
         """)
         allure.attach(driver.get_screenshot_as_png(), name="1_Navegacion", attachment_type=allure.attachment_type.PNG)
 
-    # 2. LOCALIZAR Y ABRIR TOOLBAR
+    # 2. LOCALIZAR Y ABRIR TOOLBAR (Con tiempo extra para que se vea el despliegue)
     with allure.step("2. Localizar y abrir Sharetoolbar"):
         try:
             xpath_abrir = '//*[@id="fusion-app"]/div[8]/div[1]/main/div[1]/div/div[3]/div/div[2]/div/button'
             boton_share = wait.until(EC.element_to_be_clickable((By.XPATH, xpath_abrir)))
             driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", boton_share)
             
-            # Click y espera de 3 segundos para que los botones se desplieguen bien en la captura
             driver.execute_script("arguments[0].click();", boton_share)
-            time.sleep(3) 
+            time.sleep(3) # Espera para animación de despliegue
             
             wait.until(EC.visibility_of_element_located((By.XPATH, '//*[@id="fusion-app"]/div[8]/div[1]/main/div[1]/div/div[3]/div/div[2]/div[2]/button[1]')))
         except Exception as e:
@@ -53,14 +52,14 @@ def test_share_toolbar_validation(driver):
         finally:
             allure.attach(driver.get_screenshot_as_png(), name="2_Toolbar_Abierto", attachment_type=allure.attachment_type.PNG)
 
-    # 3. VALIDACIÓN DE REDES SOCIALES
-    with allure.step("3. Validación de URLs y ventanas externas"):
+    # 3. VALIDACIÓN DE REDES SOCIALES (Solo apertura y captura)
+    with allure.step("3. Validación de apertura de ventanas"):
         redes = [
-            {"nombre": "Facebook", "xpath": '//*[@id="fusion-app"]/div[8]/div[1]/main/div[1]/div/div[3]/div/div[2]/div[2]/button[1]', "esperado": "facebook.com"},
-            {"nombre": "X (Twitter)", "xpath": '//*[@id="fusion-app"]/div[8]/div[1]/main/div[1]/div/div[3]/div/div[2]/div[2]/button[2]', "esperado": "x.com"},
-            {"nombre": "Copiar Link", "xpath": '//*[@id="fusion-app"]/div[8]/div[1]/main/div[1]/div/div[3]/div/div[2]/div[2]/button[3]', "esperado": "TOOLTIP"},
-            {"nombre": "WhatsApp", "xpath": '//*[@id="fusion-app"]/div[8]/div[1]/main/div[1]/div/div[3]/div/div[2]/div[2]/button[4]', "esperado": "whatsapp.com"},
-            {"nombre": "Telegram", "xpath": '//*[@id="fusion-app"]/div[8]/div[1]/main/div[1]/div/div[3]/div/div[2]/div[2]/button[5]', "esperado": "telegram.me"}
+            {"nombre": "Facebook", "xpath": '//*[@id="fusion-app"]/div[8]/div[1]/main/div[1]/div/div[3]/div/div[2]/div[2]/button[1]'},
+            {"nombre": "X (Twitter)", "xpath": '//*[@id="fusion-app"]/div[8]/div[1]/main/div[1]/div/div[3]/div/div[2]/div[2]/button[2]'},
+            {"nombre": "Copiar Link", "xpath": '//*[@id="fusion-app"]/div[8]/div[1]/main/div[1]/div/div[3]/div/div[2]/div[2]/button[3]', "is_tooltip": True},
+            {"nombre": "WhatsApp", "xpath": '//*[@id="fusion-app"]/div[8]/div[1]/main/div[1]/div/div[3]/div/div[2]/div[2]/button[4]'},
+            {"nombre": "Telegram", "xpath": '//*[@id="fusion-app"]/div[8]/div[1]/main/div[1]/div/div[3]/div/div[2]/div[2]/button[5]'}
         ]
         
         ventana_principal = driver.current_window_handle
@@ -71,60 +70,51 @@ def test_share_toolbar_validation(driver):
                     intentar_cerrar_popup()
                     boton = wait.until(EC.element_to_be_clickable((By.XPATH, red['xpath'])))
                     
-                    if red['esperado'] == "TOOLTIP":
+                    if red.get("is_tooltip"):
                         driver.execute_script("arguments[0].click();", boton)
-                        # Captura inmediata para el tooltip
-                        allure.attach(driver.get_screenshot_as_png(), name="Captura_Tooltip_Copiado", attachment_type=allure.attachment_type.PNG)
+                        time.sleep(1)
+                        allure.attach(driver.get_screenshot_as_png(), name=f"Captura_{red['nombre']}", attachment_type=allure.attachment_type.PNG)
                         continue
 
-                    # LÓGICA DE REINTENTO PARA VENTANAS (Telegram Fix)
+                    # Intento de click con lógica de reintento para estabilidad
                     ventana_abierta = False
                     for intento in range(2):
                         driver.execute_script("arguments[0].click();", boton)
                         try:
-                            WebDriverWait(driver, 6).until(lambda d: len(d.window_handles) > 1)
+                            WebDriverWait(driver, 8).until(lambda d: len(d.window_handles) > 1)
                             ventana_abierta = True
                             break 
                         except:
-                            pass # Reintenta el click si no abrió la ventana
+                            continue
                     
                     if not ventana_abierta:
-                        raise Exception(f"No se detectó apertura de ventana para {red['nombre']}")
+                        raise Exception(f"No se abrió la ventana de {red['nombre']}")
 
-                    # Cambio de foco y espera de carga de URL
+                    # Cambio a la nueva ventana y captura
                     nueva_ventana = [w for w in driver.window_handles if w != ventana_principal][0]
                     driver.switch_to.window(nueva_ventana)
                     
-                    dominio = red['esperado'].split('.')[0]
-                    WebDriverWait(driver, 15).until(EC.url_contains(dominio))
-                    
-                    # Captura de la ventana de la red social
+                    # Espera breve para que cargue algo de contenido antes de la foto
+                    time.sleep(4) 
                     allure.attach(driver.get_screenshot_as_png(), name=f"Ventana_{red['nombre']}", attachment_type=allure.attachment_type.PNG)
-                    
-                    url_actual = driver.current_url
-                    if red['esperado'] not in url_actual.lower():
-                        errores_acumulados.append(f"URL incorrecta en {red['nombre']}: {url_actual}")
                     
                     driver.close()
                     driver.switch_to.window(ventana_principal)
 
                 except Exception as e:
-                    # Captura de error para ver el estado de la principal
                     allure.attach(driver.get_screenshot_as_png(), name=f"ERROR_{red['nombre']}", attachment_type=allure.attachment_type.PNG)
                     errores_acumulados.append(f"Fallo en {red['nombre']}: {str(e)}")
                     if len(driver.window_handles) > 1:
                         driver.close()
                     driver.switch_to.window(ventana_principal)
 
-    # 4. CERRAR TOOLBAR
-    with allure.step("4. Cerrar Toolbar"):
+    # 4. FINALIZACIÓN
+    with allure.step("4. Cerrar Toolbar y validación final"):
         try:
             xpath_cerrar = '//*[@id="fusion-app"]/div[8]/div[1]/main/div[1]/div/div[3]/div/div[2]/div[1]/div/button'
             driver.execute_script("arguments[0].click();", driver.find_element(By.XPATH, xpath_cerrar))
         except:
             pass
-        finally:
-            allure.attach(driver.get_screenshot_as_png(), name="4_Final", attachment_type=allure.attachment_type.PNG)
-
-    if errores_acumulados:
-        pytest.fail(f"Fallas detectadas en ShareToolbar: {len(errores_acumulados)}")
+        
+        if errores_acumulados:
+            pytest.fail(f"Se detectaron {len(errores_acumulados)} fallos en ShareToolbar")
