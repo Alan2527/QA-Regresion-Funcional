@@ -48,10 +48,10 @@ def test_shorts_player_full_validation(driver):
 
     # 4. NAVEGACIÓN NEXT/PREV
     with allure.step("4. Validar Navegación entre Shorts"):
-        driver.execute_script("arguments[0].click();", driver.find_element(By.XPATH, "//button[contains(@class, 'next--button')]"))
+        driver.execute_script("arguments[0].click();", driver.find_element(By.XPATH, '//*[@id="fusion-app"]/div[12]/main/div[5]/div[1]/div/div/div/div[2]/div[2]/button[2]'))
         time.sleep(2)
         allure.attach(driver.get_screenshot_as_png(), name="4_Siguiente_Short", attachment_type=allure.attachment_type.PNG)
-        driver.execute_script("arguments[0].click();", driver.find_element(By.XPATH, "//button[contains(@class, 'prev--button')]"))
+        driver.execute_script("arguments[0].click();", driver.find_element(By.XPATH, '//*[@id="fusion-app"]/div[12]/main/div[5]/div[1]/div/div/div/div[2]/div[2]/button[1]'))
         time.sleep(1)
         allure.attach(driver.get_screenshot_as_png(), name="4_Anterior_Short", attachment_type=allure.attachment_type.PNG)
 
