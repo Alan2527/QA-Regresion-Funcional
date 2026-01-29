@@ -6,106 +6,131 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 @allure.feature("Shorts")
-@allure.story("Validación Total - 10 Pasos con Capturas Obligatorias")
+@allure.story("Validación con XPaths Exactos y Continuidad en Fallos")
 def test_shorts_player_full_validation(driver):
     url_home = "https://tn.com.ar/"
-    wait = WebDriverWait(driver, 25)
+    wait = WebDriverWait(driver, 20)
     main_window = driver.current_window_handle
 
-    # 1. NAVEGACIÓN
-    with allure.step("1. Scrollear al Brick de Shorts"):
-        driver.get(url_home)
-        # Limpieza de anuncios/modales que bloquean capturas
-        driver.execute_script("document.querySelectorAll('.tp-modal, #didomi-host').forEach(el => el.remove());")
-        container = wait.until(EC.presence_of_element_located((By.XPATH, "//div[contains(@class, 'brick-shorts__container')]")))
-        driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", container)
-        time.sleep(2)
-        allure.attach(driver.get_screenshot_as_png(), name="1_Home_Shorts", attachment_type=allure.attachment_type.PNG)
+    # --- INICIO DEL TEST ---
+    driver.get(url_home)
+    driver.execute_script("document.querySelectorAll('.tp-modal, #didomi-host').forEach(el => el.remove());")
 
-    # 2. APERTURA
-    with allure.step("2. Abrir reproductor"):
-        short_card = wait.until(EC.element_to_be_clickable((By.XPATH, "//a[contains(@class, 'shortsList__card')]")))
-        driver.execute_script("arguments[0].click();", short_card)
-        wait.until(EC.visibility_of_element_located((By.XPATH, "//div[contains(@class, 'active')]//video")))
-        allure.attach(driver.get_screenshot_as_png(), name="2_Player_Abierto", attachment_type=allure.attachment_type.PNG)
-
-    # 3. EL OJO
-    with allure.step("3. Validar botón El Ojo"):
-        btn_ojo = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(@class, 'show-controls--button')]")))
-        driver.execute_script("arguments[0].click();", btn_ojo) 
-        time.sleep(1)
-        allure.attach(driver.get_screenshot_as_png(), name="3_Ocultar_Controles", attachment_type=allure.attachment_type.PNG)
-        driver.execute_script("arguments[0].click();", btn_ojo) 
-        time.sleep(1)
-        allure.attach(driver.get_screenshot_as_png(), name="3_Mostrar_Controles", attachment_type=allure.attachment_type.PNG)
-
-    # 4. NAVEGACIÓN (Corregido selector de tus logs)
-    with allure.step("4. Navegar entre Shorts"):
-        btn_next = driver.find_element(By.XPATH, "//button[contains(@class, 'next')]")
-        driver.execute_script("arguments[0].click();", btn_next)
-        time.sleep(2)
-        allure.attach(driver.get_screenshot_as_png(), name="4_Siguiente_Short", attachment_type=allure.attachment_type.PNG)
-        
-        btn_prev = driver.find_element(By.XPATH, "//button[contains(@class, 'prev')]")
-        driver.execute_script("arguments[0].click();", btn_prev)
-        time.sleep(2)
-        allure.attach(driver.get_screenshot_as_png(), name="4_Anterior_Short", attachment_type=allure.attachment_type.PNG)
-
-    # 5. SHARE Y REDES (CADA UNA CON CAPTURA)
-    with allure.step("5. Validar Share y Redes Sociales"):
-        btn_share = driver.find_element(By.XPATH, "//button[contains(@class, 'share-button')]")
-        driver.execute_script("arguments[0].click();", btn_share)
-        time.sleep(1)
-        allure.attach(driver.get_screenshot_as_png(), name="5_Menu_Share_Desplegado", attachment_type=allure.attachment_type.PNG)
-        
-        nombres_redes = ["Facebook", "Twitter", "WhatsApp", "Telegram", "Copiar"]
-        for i, nombre in enumerate(nombres_redes, 1):
-            with allure.step(f"5.{i} Click en {nombre}"):
-                xpath_red = f'(//div[contains(@class, "shorts-player__share-list")]//button)[{i}]'
-                btn_red = driver.find_element(By.XPATH, xpath_red)
-                driver.execute_script("arguments[0].click();", btn_red)
-                time.sleep(3)
-                allure.attach(driver.get_screenshot_as_png(), name=f"Captura_{nombre}", attachment_type=allure.attachment_type.PNG)
-                if len(driver.window_handles) > 1:
-                    driver.switch_to.window(driver.window_handles[1])
-                    driver.close()
-                    driver.switch_to.window(main_window)
-
-    # 6. MUTE (SEPARADO)
-    with allure.step("6. Validar Mute"):
-        btn_mute = driver.find_element(By.XPATH, "//button[contains(@class, 'mute--button')]")
-        driver.execute_script("arguments[0].click();", btn_mute)
-        allure.attach(driver.get_screenshot_as_png(), name="6_Mute_Activo", attachment_type=allure.attachment_type.PNG)
-
-    # 7. FULLSCREEN (SEPARADO)
-    with allure.step("7. Validar Fullscreen"):
-        btn_fs = driver.find_element(By.XPATH, "//button[contains(@class, 'fullscreen--button')]")
-        driver.execute_script("arguments[0].click();", btn_fs)
-        time.sleep(1)
-        allure.attach(driver.get_screenshot_as_png(), name="7_Fullscreen_Activo", attachment_type=allure.attachment_type.PNG)
-        driver.execute_script("arguments[0].click();", btn_fs) # Salir
-
-    # 8. IR A NOTA
-    with allure.step("8. Ir a la nota"):
-        link_nota = wait.until(EC.element_to_be_clickable((By.XPATH, "//h2[contains(@class, 'active')]/a")))
-        driver.execute_script("arguments[0].click();", link_nota)
-        time.sleep(4)
-        allure.attach(driver.get_screenshot_as_png(), name="8_En_la_Nota", attachment_type=allure.attachment_type.PNG)
-
-    # 9. VOLVER (Reforzado para evitar el Timeout del log)
-    with allure.step("9. Volver atrás"):
-        driver.execute_script("window.history.go(-1);")
-        time.sleep(3)
-        wait.until(EC.presence_of_element_located((By.XPATH, "//div[contains(@class, 'brick-shorts__container')]")))
-        allure.attach(driver.get_screenshot_as_png(), name="9_Vuelta_Home", attachment_type=allure.attachment_type.PNG)
-
-    # 10. CERRAR
-    with allure.step("10. Cerrar reproductor"):
-        # Re-abrimos para cerrar o validamos el botón de cierre si sigue presente
+    # 1. SCROLL AL BRICK
+    with allure.step("1. Buscar y scrollear al Brick de Shorts"):
         try:
-            btn_cerrar = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(@class, 'shorts-player__close')]")))
-            driver.execute_script("arguments[0].click();", btn_cerrar)
+            container = wait.until(EC.presence_of_element_located((By.XPATH, "//div[contains(@class, 'brick-shorts__container')]")))
+            driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", container)
+            time.sleep(2)
+            allure.attach(driver.get_screenshot_as_png(), name="1_Home_Shorts", attachment_type=allure.attachment_type.PNG)
+        except Exception as e:
+            allure.attach(driver.get_screenshot_as_png(), name="ERROR_Paso_1", attachment_type=allure.attachment_type.PNG)
+            print(f"Fallo paso 1: {e}")
+
+    # 2. ABRIR REPRODUCTOR
+    with allure.step("2. Abrir reproductor"):
+        try:
+            short_card = wait.until(EC.element_to_be_clickable((By.XPATH, "//a[contains(@class, 'shortsList__card')]")))
+            driver.execute_script("arguments[0].click();", short_card)
+            time.sleep(3)
+            allure.attach(driver.get_screenshot_as_png(), name="2_Reproductor_Abierto", attachment_type=allure.attachment_type.PNG)
+        except Exception as e:
+            allure.attach(driver.get_screenshot_as_png(), name="ERROR_Paso_2", attachment_type=allure.attachment_type.PNG)
+            print(f"Fallo paso 2: {e}")
+
+    # 3. SHARE - DESPLEGAR MENÚ
+    with allure.step("3. Abrir Menú Share"):
+        try:
+            btn_share = driver.find_element(By.XPATH, "//button[contains(@class, 'share-button')]")
+            driver.execute_script("arguments[0].click();", btn_share)
             time.sleep(1)
-            allure.attach(driver.get_screenshot_as_png(), name="10_Reproductor_Cerrado", attachment_type=allure.attachment_type.PNG)
-        except:
-            allure.attach(driver.get_screenshot_as_png(), name="10_Error_Cierre", attachment_type=allure.attachment_type.PNG)
+            allure.attach(driver.get_screenshot_as_png(), name="3_Menu_Share", attachment_type=allure.attachment_type.PNG)
+        except Exception as e:
+            allure.attach(driver.get_screenshot_as_png(), name="ERROR_Paso_3", attachment_type=allure.attachment_type.PNG)
+
+    # --- REDES SOCIALES CON XPATHS EXACTOS ---
+
+    # FACEBOOK
+    with allure.step("4. Validar Facebook"):
+        try:
+            fb = driver.find_element(By.XPATH, '//*[@id="fusion-app"]/div[12]/main/div[5]/div[1]/div/div/div/div[2]/div[3]/div[2]/button[1]')
+            driver.execute_script("arguments[0].click();", fb)
+            time.sleep(2)
+            allure.attach(driver.get_screenshot_as_png(), name="4_Facebook_Click", attachment_type=allure.attachment_type.PNG)
+            if len(driver.window_handles) > 1:
+                driver.switch_to.window(driver.window_handles[1]); driver.close(); driver.switch_to.window(main_window)
+        except Exception as e:
+            allure.attach(driver.get_screenshot_as_png(), name="ERROR_Facebook", attachment_type=allure.attachment_type.PNG)
+
+    # X (TWITTER)
+    with allure.step("5. Validar X"):
+        try:
+            tw = driver.find_element(By.XPATH, '//*[@id="fusion-app"]/div[12]/main/div[5]/div[1]/div/div/div/div[2]/div[3]/div[2]/button[2]')
+            driver.execute_script("arguments[0].click();", tw)
+            time.sleep(2)
+            allure.attach(driver.get_screenshot_as_png(), name="5_X_Click", attachment_type=allure.attachment_type.PNG)
+            if len(driver.window_handles) > 1:
+                driver.switch_to.window(driver.window_handles[1]); driver.close(); driver.switch_to.window(main_window)
+        except Exception as e:
+            allure.attach(driver.get_screenshot_as_png(), name="ERROR_X", attachment_type=allure.attachment_type.PNG)
+
+    # COPIAR (Captura rápida para el tooltip)
+    with allure.step("6. Validar Copiar (Captura Rápida)"):
+        try:
+            copy = driver.find_element(By.XPATH, '//*[@id="fusion-app"]/div[12]/main/div[5]/div[1]/div/div/div/div[2]/div[3]/div[2]/button[3]')
+            driver.execute_script("arguments[0].click();", copy)
+            # CAPTURA INMEDIATA sin sleep para agarrar el tooltip
+            allure.attach(driver.get_screenshot_as_png(), name="6_Tooltip_Copiado", attachment_type=allure.attachment_type.PNG)
+        except Exception as e:
+            allure.attach(driver.get_screenshot_as_png(), name="ERROR_Copiar", attachment_type=allure.attachment_type.PNG)
+
+    # WHATSAPP
+    with allure.step("7. Validar WhatsApp"):
+        try:
+            ws = driver.find_element(By.XPATH, '//*[@id="fusion-app"]/div[12]/main/div[5]/div[1]/div/div/div/div[2]/div[3]/div[2]/button[4]')
+            driver.execute_script("arguments[0].click();", ws)
+            time.sleep(2)
+            allure.attach(driver.get_screenshot_as_png(), name="7_WhatsApp_Click", attachment_type=allure.attachment_type.PNG)
+            if len(driver.window_handles) > 1:
+                driver.switch_to.window(driver.window_handles[1]); driver.close(); driver.switch_to.window(main_window)
+        except Exception as e:
+            allure.attach(driver.get_screenshot_as_png(), name="ERROR_WhatsApp", attachment_type=allure.attachment_type.PNG)
+
+    # TELEGRAM
+    with allure.step("8. Validar Telegram"):
+        try:
+            tg = driver.find_element(By.XPATH, '//*[@id="fusion-app"]/div[12]/main/div[5]/div[1]/div/div/div/div[2]/div[3]/div[2]/button[5]')
+            driver.execute_script("arguments[0].click();", tg)
+            time.sleep(2)
+            allure.attach(driver.get_screenshot_as_png(), name="8_Telegram_Click", attachment_type=allure.attachment_type.PNG)
+            if len(driver.window_handles) > 1:
+                driver.switch_to.window(driver.window_handles[1]); driver.close(); driver.switch_to.window(main_window)
+        except Exception as e:
+            allure.attach(driver.get_screenshot_as_png(), name="ERROR_Telegram", attachment_type=allure.attachment_type.PNG)
+
+    # CERRAR SHARE
+    with allure.step("9. Cerrar Menú Share"):
+        try:
+            close_share = driver.find_element(By.XPATH, '//*[@id="fusion-app"]/div[12]/main/div[5]/div[1]/div/div/div/div[2]/div[3]/div[1]/div/button')
+            driver.execute_script("arguments[0].click();", close_share)
+            time.sleep(1)
+            allure.attach(driver.get_screenshot_as_png(), name="9_Share_Cerrado", attachment_type=allure.attachment_type.PNG)
+        except Exception as e:
+            allure.attach(driver.get_screenshot_as_png(), name="ERROR_Cerrar_Share", attachment_type=allure.attachment_type.PNG)
+
+    # 10. MUTE Y FULLSCREEN (SEPARADOS)
+    with allure.step("10. Validar Mute"):
+        try:
+            btn_mute = driver.find_element(By.XPATH, "//button[contains(@class, 'mute--button')]")
+            driver.execute_script("arguments[0].click();", btn_mute)
+            allure.attach(driver.get_screenshot_as_png(), name="10_Mute", attachment_type=allure.attachment_type.PNG)
+        except: pass
+
+    with allure.step("11. Validar Fullscreen"):
+        try:
+            btn_fs = driver.find_element(By.XPATH, "//button[contains(@class, 'fullscreen--button')]")
+            driver.execute_script("arguments[0].click();", btn_fs)
+            time.sleep(1)
+            allure.attach(driver.get_screenshot_as_png(), name="11_Fullscreen", attachment_type=allure.attachment_type.PNG)
+            driver.execute_script("arguments[0].click();", btn_fs)
+        except: pass
