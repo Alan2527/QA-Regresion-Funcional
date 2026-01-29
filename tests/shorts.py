@@ -6,7 +6,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 @allure.feature("Shorts")
-@allure.story("Validación Integral: Controles, Redes y Navegación")
+@allure.story("Validación Integral: Controles, Redes y Navegación con Force Back")
 def test_shorts_player_full_validation(driver):
     url_home = "https://tn.com.ar/"
     wait = WebDriverWait(driver, 20)
@@ -15,7 +15,7 @@ def test_shorts_player_full_validation(driver):
     # XPaths base
     xpath_container = "//div[contains(@class, 'brick-shorts__container')]"
     xpath_player_active = "//div[contains(@class, 'shorts-player__video') and contains(@class, 'active')]"
-    xpath_btn_cerrar = '//*[@id="fusion-app"]/div[12]/main/div[5]/div[1]/div/div/div/button'
+    xpath_btn_cerrar = "//button[contains(@class, 'shorts-player__close')]"
 
     # 1. NAVEGACIÓN
     with allure.step("1. Buscar y scrollear al Brick de Shorts"):
@@ -68,20 +68,20 @@ def test_shorts_player_full_validation(driver):
         allure.attach(driver.get_screenshot_as_png(), name="5_Menu_Share_Abierto", attachment_type=allure.attachment_type.PNG)
 
         for i in range(1, 6):
-            xpath_red = f'//*[@id="fusion-app"]/div[12]/main/div[5]/div[1]/div/div/div/div[2]/div[3]/div[2]/button[{i}]'
+            xpath_red = f'(//div[contains(@class, "shorts-player__share-list")]//button)[{i}]'
             try:
                 btn_red = driver.find_element(By.XPATH, xpath_red)
                 driver.execute_script("arguments[0].click();", btn_red)
-                time.sleep(4) # Esperar a que cargue la ventana
+                time.sleep(4)
                 
-                windows = driver.window_handles
-                if len(windows) > 1:
-                    driver.switch_to.window(windows[1])
-                    allure.attach(driver.get_screenshot_as_png(), name=f"5_Ventana_Red_Social_{i}", attachment_type=allure.attachment_type.PNG)
+                handles = driver.window_handles
+                if len(handles) > 1:
+                    driver.switch_to.window(handles[1])
+                    allure.attach(driver.get_screenshot_as_png(), name=f"5_Red_Social_{i}_Ventana", attachment_type=allure.attachment_type.PNG)
                     driver.close()
                     driver.switch_to.window(main_window)
                 else:
-                    allure.attach(driver.get_screenshot_as_png(), name=f"5_Red_{i}_Sin_Nueva_Ventana", attachment_type=allure.attachment_type.PNG)
+                    allure.attach(driver.get_screenshot_as_png(), name=f"5_Red_{i}_Sin_Pestaña", attachment_type=allure.attachment_type.PNG)
             except: pass
         
         # Cerrar el panel de share si quedó abierto
@@ -93,39 +93,40 @@ def test_shorts_player_full_validation(driver):
         btn_mute = driver.find_element(By.XPATH, "//button[contains(@class, 'mute--button')]")
         driver.execute_script("arguments[0].click();", btn_mute)
         allure.attach(driver.get_screenshot_as_png(), name="6_Mute_Activo", attachment_type=allure.attachment_type.PNG)
+        driver.execute_script("arguments[0].click();", btn_mute) # Quitar mute para seguir
 
     # 7. FULLSCREEN
     with allure.step("7. Validar Fullscreen"):
         btn_fs = driver.find_element(By.XPATH, "//button[contains(@class, 'fullscreen--button')]")
         driver.execute_script("arguments[0].click();", btn_fs)
         time.sleep(2)
-        allure.attach(driver.get_screenshot_as_png(), name="7_Fullscreen_In", attachment_type=allure.attachment_type.PNG)
-        driver.execute_script("arguments[0].click();", btn_fs)
+        allure.attach(driver.get_screenshot_as_png(), name="7_Fullscreen_Activo", attachment_type=allure.attachment_type.PNG)
+        driver.execute_script("arguments[0].click();", btn_fs) # Salir de FS
         time.sleep(1)
 
     # 8. CLICK EN NOTA
     with allure.step("8. Click en el link de la nota"):
-        xpath_link_nota = "//h2[contains(@class, 'shorts-player__description') and contains(@class, 'active')]/a"
+        xpath_link_nota = "//h2[contains(@class, 'active')]/a"
         link_nota = wait.until(EC.element_to_be_clickable((By.XPATH, xpath_link_nota)))
         driver.execute_script("arguments[0].click();", link_nota)
         time.sleep(4)
         allure.attach(driver.get_screenshot_as_png(), name="8_Pagina_de_la_Nota", attachment_type=allure.attachment_type.PNG)
 
-    # 9. VOLVER Y LIMPIEZA DE ADS
-    with allure.step("9. Volver atrás y limpiar bloqueos"):
-        driver.back()
+    # 9. VOLVER ATRÁS (FORCE BACK)
+    with allure.step("9. Volver atrás con Force Back"):
+        # Usamos historial de JS para asegurar que el navegador responda
+        driver.execute_script("window.history.go(-1);")
         time.sleep(5)
-        # Script para borrar cualquier Ad o Overlay que bloquee el botón de cerrar
-        driver.execute_script("""
-            const blockers = document.querySelectorAll('iframe, .adsbygoogle, [id*="google_ads"], [class*="interstitial"], [class*="overlay"]');
-            blockers.forEach(el => el.remove());
-            document.body.style.overflow = 'auto';
-        """)
+        # Verificamos si volvimos al Home
         allure.attach(driver.get_screenshot_as_png(), name="9_Vuelta_a_Home", attachment_type=allure.attachment_type.PNG)
 
     # 10. CERRAR
     with allure.step("10. Cerrar reproductor"):
+        # Aseguramos que el brick esté en vista por si se perdió el foco
+        container = driver.find_element(By.XPATH, xpath_container)
+        driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", container)
+        
         btn_cerrar = wait.until(EC.element_to_be_clickable((By.XPATH, xpath_btn_cerrar)))
         driver.execute_script("arguments[0].click();", btn_cerrar)
         time.sleep(2)
-        allure.attach(driver.get_screenshot_as_png(), name="10_Final_Test", attachment_type=allure.attachment_type.PNG)
+        allure.attach(driver.get_screenshot_as_png(), name="10_Final_Test_Cerrado", attachment_type=allure.attachment_type.PNG)
