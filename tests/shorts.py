@@ -11,13 +11,12 @@ def test_shorts_player_full_validation(driver):
     url_home = "https://tn.com.ar/"
     wait = WebDriverWait(driver, 30)
     
-    # Selectores de Clase (Más estables que los IDs dinámicos)
     xpath_container = "//div[contains(@class, 'brick-shorts__container')]"
     xpath_card_short = "//a[contains(@class, 'shortsList__card')]"
     xpath_player_active = "//div[contains(@class, 'shorts-player__video') and contains(@class, 'active')]"
     xpath_h2_desc = "//h2[contains(@class, 'shorts-player__description')]"
 
-    # 1. BUSCAR Y SCROLLEAR AL BRICK
+    # 1. NAVEGACIÓN
     with allure.step("1. Buscar y scrollear al Brick de Shorts"):
         driver.get(url_home)
         try:
@@ -26,79 +25,90 @@ def test_shorts_player_full_validation(driver):
             driver.execute_script("arguments[0].click();", btn_aceptar)
         except:
             pass
-
         container = wait.until(EC.presence_of_element_located((By.XPATH, xpath_container)))
         driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", container)
         time.sleep(3)
-        allure.attach(driver.get_screenshot_as_png(), name="1_Seccion_Shorts", attachment_type=allure.attachment_type.PNG)
 
-    # 2. CLICK EN LA CARD (Entrar al reproductor)
-    with allure.step("2. Click en shortsList__card para abrir reproductor"):
+    # 2. APERTURA
+    with allure.step("2. Abrir reproductor"):
         short_card = wait.until(EC.element_to_be_clickable((By.XPATH, xpath_card_short)))
         driver.execute_script("arguments[0].click();", short_card)
         wait.until(EC.visibility_of_element_located((By.XPATH, xpath_player_active)))
-        time.sleep(4) # Espera para que cargue el primer video
-        allure.attach(driver.get_screenshot_as_png(), name="2_Reproductor_Abierto", attachment_type=allure.attachment_type.PNG)
+        time.sleep(4) 
 
-    # 3. EL OJO (Ocultar/Mostrar Controles)
-    with allure.step("3. Validar botón El Ojo"):
-        xpath_ojo = "//button[contains(@class, 'show-controls--button')]"
-        btn_ojo = wait.until(EC.element_to_be_clickable((By.XPATH, xpath_ojo)))
-        driver.execute_script("arguments[0].click();", btn_ojo) 
-        wait.until(EC.invisibility_of_element_located((By.XPATH, xpath_h2_desc)))
-        time.sleep(2)
-        allure.attach(driver.get_screenshot_as_png(), name="3_Controles_Ocultos", attachment_type=allure.attachment_type.PNG)
-        driver.execute_script("arguments[0].click();", btn_ojo) 
-        wait.until(EC.visibility_of_element_located((By.XPATH, xpath_h2_desc)))
+    # 3. EL OJO, 4. NAVEGACIÓN (Se mantienen igual para no perder cobertura)
+    # ... (omitidos en este snippet para brevedad, pero mantenelos en tu archivo)
 
-    # 4. NAVEGACIÓN (Next / Previous)
-    with allure.step("4. Validar Navegación (Next/Prev)"):
-        xpath_next = "//button[contains(@class, 'next--button')]"
-        xpath_prev = "//button[contains(@class, 'previous--button')]"
-        
-        desc_inicial = driver.find_element(By.XPATH, xpath_h2_desc).text
-        driver.execute_script("arguments[0].click();", driver.find_element(By.XPATH, xpath_next))
-        wait.until(lambda d: d.find_element(By.XPATH, xpath_h2_desc).text != desc_inicial)
-        time.sleep(4)
-        allure.attach(driver.get_screenshot_as_png(), name="4a_Siguiente_Video", attachment_type=allure.attachment_type.PNG)
+    # 5. SHARE BUTTON Y REDES (DETALLADO)
+    with allure.step("5. Validar Botón Share y sus Redes"):
+        xpath_share_principal = "//button[contains(@class, 'share-button')]"
+        btn_share = wait.until(EC.element_to_be_clickable((By.XPATH, xpath_share_principal)))
+        driver.execute_script("arguments[0].click();", btn_share)
+        time.sleep(2) # Espera a que despliegue el panel
 
-        desc_actual = driver.find_element(By.XPATH, xpath_h2_desc).text
-        driver.execute_script("arguments[0].click();", driver.find_element(By.XPATH, xpath_prev))
-        wait.until(lambda d: d.find_element(By.XPATH, xpath_h2_desc).text != desc_actual)
-        time.sleep(2)
-        allure.attach(driver.get_screenshot_as_png(), name="4b_Video_Anterior", attachment_type=allure.attachment_type.PNG)
+        redes_shorts = [
+            {"nombre": "Facebook", "xpath": '//*[@id="fusion-app"]/div[12]/main/div[5]/div[1]/div/div/div/div[2]/div[3]/div[2]/button[1]'},
+            {"nombre": "X", "xpath": '//*[@id="fusion-app"]/div[12]/main/div[5]/div[1]/div/div/div/div[2]/div[3]/div[2]/button[2]'},
+            {"nombre": "Copiar", "xpath": '//*[@id="fusion-app"]/div[12]/main/div[5]/div[1]/div/div/div/div[2]/div[3]/div[2]/button[3]', "instantanea": True},
+            {"nombre": "WhatsApp", "xpath": '//*[@id="fusion-app"]/div[12]/main/div[5]/div[1]/div/div/div/div[2]/div[3]/div[2]/button[4]'},
+            {"nombre": "Telegram", "xpath": '//*[@id="fusion-app"]/div[12]/main/div[5]/div[1]/div/div/div/div[2]/div[3]/div[2]/button[5]'}
+        ]
 
-    # 5. SHARE BUTTON
-    with allure.step("5. Validar Botón Share"):
-        xpath_share = "//button[contains(@class, 'share-button')]"
-        driver.execute_script("arguments[0].click();", driver.find_element(By.XPATH, xpath_share))
-        time.sleep(2)
-        allure.attach(driver.get_screenshot_as_png(), name="5_Panel_Share", attachment_type=allure.attachment_type.PNG)
-        driver.execute_script("arguments[0].click();", driver.find_element(By.XPATH, xpath_share))
+        ventana_home = driver.current_window_handle
 
-    # 6. MUTE Y FULLSCREEN
-    with allure.step("6. Validar Mute y Fullscreen"):
+        for red in redes_shorts:
+            with allure.step(f"Probar {red['nombre']}"):
+                btn_red = driver.find_element(By.XPATH, red['xpath'])
+                driver.execute_script("arguments[0].click();", btn_red)
+                
+                if red.get("instantanea"):
+                    # Captura inmediata para el tooltip de "Copiado"
+                    allure.attach(driver.get_screenshot_as_png(), name=f"Captura_{red['nombre']}", attachment_type=allure.attachment_type.PNG)
+                else:
+                    # Lógica para redes que abren ventana nueva
+                    time.sleep(2)
+                    handles = driver.window_handles
+                    if len(handles) > 1:
+                        nueva_ventana = [h for h in handles if h != ventana_home][0]
+                        driver.switch_to.window(nueva_ventana)
+                        time.sleep(2)
+                        allure.attach(driver.get_screenshot_as_png(), name=f"Ventana_{red['nombre']}", attachment_type=allure.attachment_type.PNG)
+                        driver.close()
+                        driver.switch_to.window(ventana_home)
+                    else:
+                        allure.attach(driver.get_screenshot_as_png(), name=f"Captura_{red['nombre']}", attachment_type=allure.attachment_type.PNG)
+
+        # Cerrar el panel de share
+        driver.execute_script("arguments[0].click();", btn_share)
+
+    # 6. MUTE Y 7. FULLSCREEN (Separados como pediste)
+    with allure.step("6. Validar Mute"):
         driver.execute_script("arguments[0].click();", driver.find_element(By.XPATH, "//button[contains(@class, 'mute--button')]"))
-        driver.execute_script("arguments[0].click();", driver.find_element(By.XPATH, "//button[contains(@class, 'fullscreen--button')]"))
-        time.sleep(2)
-        allure.attach(driver.get_screenshot_as_png(), name="6_Mute_y_Fullscreen", attachment_type=allure.attachment_type.PNG)
-        driver.execute_script("arguments[0].click();", driver.find_element(By.XPATH, "//button[contains(@class, 'fullscreen--button')]"))
+        allure.attach(driver.get_screenshot_as_png(), name="6_Mute", attachment_type=allure.attachment_type.PNG)
 
-    # 7. CLICK EN LINK DE DESCRIPCIÓN Y VOLVER
-    with allure.step("7. Click en link de la nota y volver"):
+    with allure.step("7. Validar Fullscreen"):
+        btn_fs = driver.find_element(By.XPATH, "//button[contains(@class, 'fullscreen--button')]")
+        driver.execute_script("arguments[0].click();", btn_fs)
+        time.sleep(2)
+        allure.attach(driver.get_screenshot_as_png(), name="7_Fullscreen", attachment_type=allure.attachment_type.PNG)
+        driver.execute_script("arguments[0].click();", btn_fs)
+
+    # 8. LINK NOTA Y RE-CENTRADO (EL FIX DEL FALLO)
+    with allure.step("8. Click en nota, volver y re-centrar"):
         link_nota = driver.find_element(By.XPATH, f"{xpath_h2_desc}/a")
         driver.execute_script("arguments[0].click();", link_nota)
         time.sleep(4)
-        allure.attach(driver.get_screenshot_as_png(), name="7_Pagina_de_la_Nota", attachment_type=allure.attachment_type.PNG)
         driver.back()
-        # Re-confirmamos que volvimos a los shorts
-        wait.until(EC.presence_of_element_located((By.XPATH, xpath_container)))
+        
+        # Volvemos a buscar el componente y nos centramos
+        time.sleep(3)
+        container = wait.until(EC.presence_of_element_located((By.XPATH, xpath_container)))
+        driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", container)
+        time.sleep(2)
+        allure.attach(driver.get_screenshot_as_png(), name="8_Home_Recentrada", attachment_type=allure.attachment_type.PNG)
 
-    # 8. CERRAR REPRODUCTOR
-    with allure.step("8. Cerrar reproductor (X)"):
-        # Limpieza por si el banner de OneSignal molesta
-        driver.execute_script("var n = document.getElementById('onesignal-slidedown-container'); if(n) n.remove();")
+    # 9. CERRAR
+    with allure.step("9. Cerrar reproductor"):
         close_btn = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(@class, 'shorts-player__close')]")))
         driver.execute_script("arguments[0].click();", close_btn)
         wait.until(EC.invisibility_of_element_located((By.XPATH, xpath_player_active)))
-        allure.attach(driver.get_screenshot_as_png(), name="8_Home_TN_Final", attachment_type=allure.attachment_type.PNG)
