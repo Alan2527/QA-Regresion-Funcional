@@ -49,16 +49,16 @@ def test_shorts_player_full_validation(driver):
         time.sleep(1)
         allure.attach(driver.get_screenshot_as_png(), name="3_Ojo_Mostrar", attachment_type=allure.attachment_type.PNG)
 
-    # 4. NAVEGACIÓN (CON FIX PARA PREV)
+    # 4. NAVEGACIÓN
     with allure.step("4. Validar Navegación entre Shorts"):
         # Siguiente
-        btn_next = driver.find_element(By.XPATH, "//button[contains(@class, 'next--button')]")
+        btn_next = driver.find_element(By.XPATH, "//*[@id='fusion-app']/div[12]/main/div[5]/div[1]/div/div/div/div[2]/div[2]/button[2]") 
         driver.execute_script("arguments[0].click();", btn_next)
         time.sleep(2)
         allure.attach(driver.get_screenshot_as_png(), name="4_Siguiente", attachment_type=allure.attachment_type.PNG)
         # Anterior (Protegido por si no existe en el primer/segundo slide)
         try:
-            btn_prev = driver.find_element(By.XPATH, "//button[contains(@class, 'prev--button')]")
+            btn_prev = driver.find_element(By.XPATH, "//*[@id='fusion-app']/div[12]/main/div[5]/div[1]/div/div/div/div[2]/div[2]/button[1]")
             driver.execute_script("arguments[0].click();", btn_prev)
             time.sleep(2)
         except:
