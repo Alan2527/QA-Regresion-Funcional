@@ -10,30 +10,29 @@ from selenium.webdriver.support import expected_conditions as EC
 def test_videolab_player_full_validation(driver):
     url_home = "https://tn.com.ar/"
     wait = WebDriverWait(driver, 25)
+    errores_acumulados = [] # Lista para marcar el fallo al final
 
-    # 1. NAVEGACIÓN Y APERTURA
+    # 1. NAVEGACIÓN, LIMPIEZA Y APERTURA
     with allure.step("1. Navegar a Home y abrir VideoLab"):
         try:
             driver.get(url_home)
             driver.execute_script("""
-                document.querySelectorAll('.tp-modal, .tp-backdrop, #didomi-host, .notifications-popup').forEach(el => el.remove());
+                const selectors = ['.tp-modal', '.tp-backdrop', '#didomi-host', '.notifications-popup', '.fc-ab-root'];
+                selectors.forEach(sel => document.querySelectorAll(sel).forEach(el => el.remove()));
                 document.body.classList.remove('tp-modal-open');
             """)
-            
-            # XPath del primer video en la sección VideoLab
             xpath_primer_video = '//*[@id="fusion-app"]/div[12]/main/div[17]/div/div[2]/div[2]/div/div/div/div[1]/div/a'
-            
             btn_video = wait.until(EC.element_to_be_clickable((By.XPATH, xpath_primer_video)))
             driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn_video)
             time.sleep(2)
             driver.execute_script("arguments[0].click();", btn_video)
             time.sleep(3)
         except Exception as e:
-            print(f"Error en paso 1: {e}")
+            errores_acumulados.append(f"Paso 1: {str(e)}")
         finally:
             allure.attach(driver.get_screenshot_as_png(), name="1_Home_VideoLab", attachment_type=allure.attachment_type.PNG)
 
-    # 2. OCULTAR / MOSTRAR (Primer click para habilitar controles)
+    # 2. OCULTAR
     with allure.step("2. Click en botón Ocultar"):
         try:
             xpath_ocultar = '//*[@id="fusion-app"]/div[12]/main/div[17]/div/div[3]/div[2]/div[1]/button'
@@ -41,33 +40,33 @@ def test_videolab_player_full_validation(driver):
             btn_ocultar.click()
             time.sleep(1)
         except Exception as e:
-            print(f"Error en paso 2: {e}")
+            errores_acumulados.append(f"Paso 2: {str(e)}")
         finally:
             allure.attach(driver.get_screenshot_as_png(), name="2_Ocultar_Controles", attachment_type=allure.attachment_type.PNG)
 
-    # 3. ACTIVAR SONIDO
-    with allure.step("3. Probar botón Activar Sonido"):
+    # 3. REACTIVAR (Para que los siguientes pasos funcionen)
+    with allure.step("3. Re-activar controles para interactuar"):
+        try:
+            xpath_ocultar = '//*[@id="fusion-app"]/div[12]/main/div[17]/div/div[3]/div[2]/div[1]/button'
+            btn_reactivar = wait.until(EC.element_to_be_clickable((By.XPATH, xpath_ocultar)))
+            btn_reactivar.click()
+            time.sleep(1)
+        except Exception as e:
+            errores_acumulados.append(f"Paso 3: {str(e)}")
+        finally:
+            allure.attach(driver.get_screenshot_as_png(), name="3_Controles_Visibles", attachment_type=allure.attachment_type.PNG)
+
+    # 4. ACTIVAR SONIDO
+    with allure.step("4. Probar botón Activar Sonido"):
         try:
             xpath_sonido = '//*[@id="fusion-app"]/div[12]/main/div[17]/div/div[3]/div[2]/button[1]'
             btn_sonido = wait.until(EC.element_to_be_clickable((By.XPATH, xpath_sonido)))
             btn_sonido.click()
             time.sleep(1)
         except Exception as e:
-            print(f"Error en paso 3: {e}")
+            errores_acumulados.append(f"Paso 4: {str(e)}")
         finally:
-            allure.attach(driver.get_screenshot_as_png(), name="3_Activar_Sonido", attachment_type=allure.attachment_type.PNG)
-
-    # 4. VOLVER A CLICK REVELAR (Para asegurar visibilidad de navegación)
-    with allure.step("4. Re-activar controles para navegación"):
-        try:
-            xpath_ocultar = '//*[@id="fusion-app"]/div[12]/main/div[17]/div/div[3]/div[2]/div[1]/button'
-            btn_ocultar = wait.until(EC.element_to_be_clickable((By.XPATH, xpath_ocultar)))
-            btn_ocultar.click()
-            time.sleep(1)
-        except Exception as e:
-            print(f"Error en paso 4: {e}")
-        finally:
-            allure.attach(driver.get_screenshot_as_png(), name="4_Revelar_Nav", attachment_type=allure.attachment_type.PNG)
+            allure.attach(driver.get_screenshot_as_png(), name="4_Activar_Sonido", attachment_type=allure.attachment_type.PNG)
 
     # 5. SIGUIENTE VIDEO
     with allure.step("5. Probar botón Siguiente Video"):
@@ -77,7 +76,7 @@ def test_videolab_player_full_validation(driver):
             btn_sig.click()
             time.sleep(2)
         except Exception as e:
-            print(f"Error en paso 5: {e}")
+            errores_acumulados.append(f"Paso 5: {str(e)}")
         finally:
             allure.attach(driver.get_screenshot_as_png(), name="5_Siguiente_Video", attachment_type=allure.attachment_type.PNG)
 
@@ -89,7 +88,7 @@ def test_videolab_player_full_validation(driver):
             btn_ant.click()
             time.sleep(2)
         except Exception as e:
-            print(f"Error en paso 6: {e}")
+            errores_acumulados.append(f"Paso 6: {str(e)}")
         finally:
             allure.attach(driver.get_screenshot_as_png(), name="6_Anterior_Video", attachment_type=allure.attachment_type.PNG)
 
@@ -101,7 +100,7 @@ def test_videolab_player_full_validation(driver):
             btn_fs.click()
             time.sleep(2)
         except Exception as e:
-            print(f"Error en paso 7: {e}")
+            errores_acumulados.append(f"Paso 7: {str(e)}")
         finally:
             allure.attach(driver.get_screenshot_as_png(), name="7_Fullscreen", attachment_type=allure.attachment_type.PNG)
 
@@ -113,6 +112,10 @@ def test_videolab_player_full_validation(driver):
             btn_cerrar.click()
             time.sleep(1)
         except Exception as e:
-            print(f"Error en paso 8: {e}")
+            errores_acumulados.append(f"Paso 8: {str(e)}")
         finally:
             allure.attach(driver.get_screenshot_as_png(), name="8_Cerrar_VideoLab", attachment_type=allure.attachment_type.PNG)
+
+    # AL FINAL: Si hubo errores, el test falla oficialmente
+    if errores_acumulados:
+        pytest.fail(f"Se detectaron fallos en los pasos de VideoLab: {len(errores_acumulados)} errores encontrados.")
