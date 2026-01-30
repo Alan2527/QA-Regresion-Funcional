@@ -47,7 +47,7 @@ def test_videolab_player_user_paths(driver):
 
     # 1. INICIO Y POPUP
     driver.get(url_home)
-    with allure.step("1. Cerrar Popup y Preparar"):
+    with allure.step("1. Cerrar Popup y Bloquear Ads"):
         try:
             wait.until(EC.element_to_be_clickable((By.XPATH, '//*[@id="onesignal-slidedown-cancel-button"]'))).click()
         except: pass
