@@ -22,7 +22,7 @@ def test_videolab_player_user_paths(driver):
     SELECTORS = {
         "brick": (By.CLASS_NAME, "relative.width_full.videolab.desktop"),
         "play": (By.XPATH, '//*[@id="fusion-app"]/div[12]/main/div[18]/div/div[2]/div[2]/div/div/div/div[1]/div/a'),
-        "ocultar": (By.XPATH, '//*[@id="fusion-app"]/div[12]/main/div[18]/div/div[3]/div[2]/div[1]/button/span/svg'),
+        "ocultar": (By.XPATH, '//*[@id="fusion-app"]/div[12]/main/div[18]/div/div[3]/div[2]/div[1]/button'),
         "mostrar": (By.XPATH, '//*[@id="fusion-app"]/div[12]/main/div[18]/div/div[3]/div[2]/div/button'),
         "siguiente": (By.XPATH, '//*[@id="fusion-app"]/div[12]/main/div[18]/div/div[3]/div[2]/div[2]/button[2]'),
         "anterior": (By.XPATH, '//*[@id="fusion-app"]/div[12]/main/div[18]/div/div[3]/div[2]/div[2]/button[1]'),
