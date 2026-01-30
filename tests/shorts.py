@@ -49,7 +49,7 @@ def test_shorts_player_user_paths(driver):
 
     # 0. INICIO
     driver.get(url_home)
-    with allure.step("0. Cerrar OneSignal y Preparar"):
+    with allure.step("0. Cerrar OneSignal y Bloquear ads"):
         try:
             # Botón OneSignal
             wait.until(EC.element_to_be_clickable((By.XPATH, '//*[@id="onesignal-slidedown-cancel-button"]'))).click()
@@ -163,8 +163,8 @@ def test_shorts_player_user_paths(driver):
         clean_ui() # LIMPIEZA CRITICA AQUI
         allure.attach(driver.get_screenshot_as_png(), name="10_Home_Retorno", attachment_type=allure.attachment_type.PNG)
 
-# 11. CERRAR REPRODUCTOR (LÓGICA INTELIGENTE)
-    with allure.step("11. Cerrar Short (Si corresponde)"):
+# 11. CERRAR REPRODUCTOR
+    with allure.step("11. Cerrar Short"):
         clean_ui()
         try:
             # Intentamos encontrar el botón
