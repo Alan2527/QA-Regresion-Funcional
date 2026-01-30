@@ -1,159 +1,159 @@
+import time
 import allure
 import pytest
-import time
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-@allure.feature("Reproductor")
-@allure.story("Validación VideoLab Completa")
-def test_videolab_player_full_validation(driver):
+@allure.feature("Videolab")
+@allure.story("Validación Estricta con XPaths y Clases del Usuario")
+def test_videolab_player_user_paths(driver):
+    # --- 1. BLOQUEO DE ADS Y CONFIGURACIÓN ---
+    driver.execute_cdp_cmd("Network.setBlockedURLs", {
+        "urls": ["*googleads*", "*doubleclick*", "*adnxs*", "*titago*", "*amazon-adsystem*", "*taboola*", "*interstitial*", "*norton*", "*2mdn*"]
+    })
+    driver.execute_cdp_cmd("Network.enable", {})
+
     url_home = "https://tn.com.ar/"
-    wait = WebDriverWait(driver, 25)
-    errores_acumulados = []
-    xpath_popup_cancel = '//*[@id="onesignal-slidedown-cancel-button"]'
+    wait = WebDriverWait(driver, 15)
+    main_window = driver.current_window_handle
 
-    def intentar_cerrar_popup():
-        """Cierra el popup de OneSignal si aparece sin generar error si no está."""
-        try:
-            # Timeout corto de 2 segundos para no demorar el flujo
-            wait_popup = WebDriverWait(driver, 2)
-            btn_cancel = wait_popup.until(EC.element_to_be_clickable((By.XPATH, xpath_popup_cancel)))
-            btn_cancel.click()
-        except:
-            pass
+    # DICCIONARIO DE SELECTORES (COPIADOS EXACTAMENTE DE TU LISTA)
+    SELECTORS = {
+        "brick": (By.CLASS_NAME, "relative.width_full.videolab.desktop"),
+        "play": (By.XPATH, '//*[@id="fusion-app"]/div[12]/main/div[18]/div/div[2]/div[2]/div/div/div/div[1]/div/a'),
+        "ocultar": (By.XPATH, '//*[@id="fusion-app"]/div[12]/main/div[18]/div/div[3]/div[2]/div[1]/button/span/svg'),
+        "mostrar": (By.XPATH, '//*[@id="fusion-app"]/div[12]/main/div[18]/div/div[3]/div[2]/div/button'),
+        "siguiente": (By.XPATH, '//*[@id="fusion-app"]/div[12]/main/div[18]/div/div[3]/div[2]/div[2]/button[2]'),
+        "anterior": (By.XPATH, '//*[@id="fusion-app"]/div[12]/main/div[18]/div/div[3]/div[2]/div[2]/button[1]'),
+        "share_btn": (By.XPATH, '//*[@id="fusion-app"]/div[12]/main/div[18]/div/div[3]/div[2]/div[3]/div/div/button'),
+        "facebook": (By.XPATH, '//*[@id="fusion-app"]/div[12]/main/div[18]/div/div[3]/div[2]/div[3]/div[2]/button[1]'),
+        "x": (By.XPATH, '//*[@id="fusion-app"]/div[12]/main/div[18]/div/div[3]/div[2]/div[3]/div[2]/button[2]'),
+        "copiar": (By.XPATH, '//*[@id="fusion-app"]/div[12]/main/div[18]/div/div[3]/div[2]/div[3]/div[2]/button[3]'),
+        "whatsapp": (By.XPATH, '//*[@id="fusion-app"]/div[12]/main/div[18]/div/div[3]/div[2]/div[3]/div[2]/button[4]'),
+        "telegram": (By.XPATH, '//*[@id="fusion-app"]/div[12]/main/div[18]/div/div[3]/div[2]/div[3]/div[2]/button[5]'),
+        "cerrar_share": (By.XPATH, '//*[@id="fusion-app"]/div[12]/main/div[18]/div/div[3]/div[2]/div[3]/div[1]/div/button'),
+        "sonido": (By.XPATH, '//*[@id="fusion-app"]/div[12]/main/div[18]/div/div[3]/div[2]/button[1]'),
+        "fullscreen": (By.XPATH, '//*[@id="fusion-app"]/div[12]/main/div[18]/div/div[3]/div[2]/button[2]'),
+        "h2_nota": (By.XPATH, '//*[@id="fusion-app"]/div[12]/main/div[18]/div/div[3]/div[1]/div[3]/div[1]/h2'),
+        "cerrar_reproductor": (By.XPATH, '//*[@id="fusion-app"]/div[12]/main/div[18]/div/div[3]/button')
+    }
 
-    # 1. NAVEGACIÓN Y LOCALIZACIÓN
-    with allure.step("1. Navegar a Home y localizar VideoLab"):
-        try:
-            driver.get(url_home)
-            intentar_cerrar_popup()
-            driver.execute_script("""
-                document.querySelectorAll('.tp-modal, .tp-backdrop, #didomi-host, .fc-ab-root').forEach(el => el.remove());
-                document.body.classList.remove('tp-modal-open');
-            """)
-            xpath_contenedor = '//*[@id="fusion-app"]/div[12]/main/div[17]/div'
-            contenedor = wait.until(EC.presence_of_element_located((By.XPATH, xpath_contenedor)))
-            driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", contenedor)
-            time.sleep(2)
-        except Exception as e:
-            errores_acumulados.append(f"Paso 1 falló: {str(e)}")
-            assert False, f"Fallo en paso 1: {e}" # Marca el paso en ROJO en Allure
-        finally:
-            allure.attach(driver.get_screenshot_as_png(), name="1_Localizar_VideoLab", attachment_type=allure.attachment_type.PNG)
+    def clean_ui():
+        driver.execute_script("""
+            const elements = document.querySelectorAll('.ad-unit, [id*="google_ads"], .interstitial, #onesignal-slidedown-container');
+            elements.forEach(el => el.remove());
+        """)
 
-    # 2. APERTURA
-    with allure.step("2. Abrir VideoLab"):
+    # 1. INICIO Y POPUP
+    driver.get(url_home)
+    with allure.step("1. Cerrar Popup y Preparar"):
         try:
-            intentar_cerrar_popup()
-            xpath_primer_video = '//*[@id="fusion-app"]/div[12]/main/div[17]/div/div[2]/div[2]/div/div/div/div[1]/div/a'
-            btn_video = wait.until(EC.element_to_be_clickable((By.XPATH, xpath_primer_video)))
-            driver.execute_script("arguments[0].click();", btn_video)
-            time.sleep(3)
-        except Exception as e:
-            errores_acumulados.append(f"Paso 2 falló: {str(e)}")
-            try: assert False, f"Fallo en paso 2: {e}"
-            except AssertionError: pass # Capturamos para que siga al paso 3
-        finally:
-            allure.attach(driver.get_screenshot_as_png(), name="2_VideoLab_Abierto", attachment_type=allure.attachment_type.PNG)
+            wait.until(EC.element_to_be_clickable((By.XPATH, '//*[@id="onesignal-slidedown-cancel-button"]'))).click()
+        except: pass
+        clean_ui()
 
-    # 3. OCULTAR
-    with allure.step("3. Click en botón Ocultar"):
-        try:
-            intentar_cerrar_popup()
-            xpath_ocultar = '//*[@id="fusion-app"]/div[12]/main/div[17]/div/div[3]/div[2]/div[1]/button'
-            btn_ocultar = wait.until(EC.element_to_be_clickable((By.XPATH, xpath_ocultar)))
-            btn_ocultar.click()
-            time.sleep(1)
-        except Exception as e:
-            errores_acumulados.append(f"Paso 3 falló: {str(e)}")
-            try: assert False, f"Fallo en paso 3: {e}"
-            except AssertionError: pass
-        finally:
-            allure.attach(driver.get_screenshot_as_png(), name="3_Ocultar_Controles", attachment_type=allure.attachment_type.PNG)
+    # 2. BRICK VIDEOLAB
+    with allure.step("2. Buscar y Centrar Videolab"):
+        # Usamos el selector de clase exacto que pasaste
+        brick = wait.until(EC.presence_of_element_located(SELECTORS["brick"]))
+        driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", brick)
+        time.sleep(2)
+        allure.attach(driver.get_screenshot_as_png(), name="2_Brick_Videolab", attachment_type=allure.attachment_type.PNG)
 
-    # 4. REACTIVAR (INDISPENSABLE)
-    with allure.step("4. Re-activar controles para interactuar"):
-        try:
-            xpath_ocultar = '//*[@id="fusion-app"]/div[12]/main/div[17]/div/div[3]/div[2]/div[1]/button'
-            btn_reactivar = wait.until(EC.element_to_be_clickable((By.XPATH, xpath_ocultar)))
-            btn_reactivar.click()
-            time.sleep(1)
-        except Exception as e:
-            errores_acumulados.append(f"Paso 4 falló: {str(e)}")
-            try: assert False, f"Fallo en paso 4: {e}"
-            except AssertionError: pass
-        finally:
-            allure.attach(driver.get_screenshot_as_png(), name="4_Controles_Visibles", attachment_type=allure.attachment_type.PNG)
+    # 3. PLAY
+    with allure.step("3. Click Play Primer Video"):
+        wait.until(EC.element_to_be_clickable(SELECTORS["play"])).click()
+        time.sleep(3)
+        allure.attach(driver.get_screenshot_as_png(), name="3_Video_Reproduciendo", attachment_type=allure.attachment_type.PNG)
 
-    # 5. SONIDO
-    with allure.step("5. Probar botón Activar Sonido"):
-        try:
-            xpath_sonido = '//*[@id="fusion-app"]/div[12]/main/div[17]/div/div[3]/div[2]/button[1]'
-            btn_sonido = wait.until(EC.element_to_be_clickable((By.XPATH, xpath_sonido)))
-            btn_sonido.click()
-        except Exception as e:
-            errores_acumulados.append(f"Paso 5 falló: {str(e)}")
-            try: assert False, f"Fallo en paso 5: {e}"
-            except AssertionError: pass
-        finally:
-            allure.attach(driver.get_screenshot_as_png(), name="5_Activar_Sonido", attachment_type=allure.attachment_type.PNG)
+    # 4 y 5. OCULTAR / MOSTRAR
+    with allure.step("4-5. Controles Ocultar/Mostrar"):
+        wait.until(EC.element_to_be_clickable(SELECTORS["ocultar"])).click()
+        time.sleep(1)
+        allure.attach(driver.get_screenshot_as_png(), name="4_Controles_Ocultos", attachment_type=allure.attachment_type.PNG)
+        wait.until(EC.element_to_be_clickable(SELECTORS["mostrar"])).click()
+        time.sleep(1)
 
     # 6. SIGUIENTE
-    with allure.step("6. Probar botón Siguiente Video"):
-        try:
-            xpath_sig = '//*[@id="fusion-app"]/div[12]/main/div[17]/div/div[3]/div[2]/div[2]/button[2]'
-            btn_sig = wait.until(EC.element_to_be_clickable((By.XPATH, xpath_sig)))
-            btn_sig.click()
-            time.sleep(2)
-        except Exception as e:
-            errores_acumulados.append(f"Paso 6 falló: {str(e)}")
-            try: assert False, f"Fallo en paso 6: {e}"
-            except AssertionError: pass
-        finally:
-            allure.attach(driver.get_screenshot_as_png(), name="6_Siguiente_Video", attachment_type=allure.attachment_type.PNG)
+    with allure.step("6. Siguiente Video"):
+        wait.until(EC.element_to_be_clickable(SELECTORS["siguiente"])).click()
+        time.sleep(2)
+        allure.attach(driver.get_screenshot_as_png(), name="6_Siguiente", attachment_type=allure.attachment_type.PNG)
 
     # 7. ANTERIOR
-    with allure.step("7. Probar botón Anterior Video"):
-        try:
-            xpath_ant = '//*[@id="fusion-app"]/div[12]/main/div[17]/div/div[3]/div[2]/div[2]/button[1]'
-            btn_ant = wait.until(EC.element_to_be_clickable((By.XPATH, xpath_ant)))
-            btn_ant.click()
-            time.sleep(2)
-        except Exception as e:
-            errores_acumulados.append(f"Paso 7 falló: {str(e)}")
-            try: assert False, f"Fallo en paso 7: {e}"
-            except AssertionError: pass
-        finally:
-            allure.attach(driver.get_screenshot_as_png(), name="7_Anterior_Video", attachment_type=allure.attachment_type.PNG)
+    with allure.step("7. Anterior Video"):
+        wait.until(EC.element_to_be_clickable(SELECTORS["anterior"])).click()
+        time.sleep(2)
+        allure.attach(driver.get_screenshot_as_png(), name="7_Anterior", attachment_type=allure.attachment_type.PNG)
 
-    # 8. FULLSCREEN
-    with allure.step("8. Probar botón Fullscreen"):
-        try:
-            xpath_fs = '//*[@id="fusion-app"]/div[12]/main/div[17]/div/div[3]/div[2]/button[2]'
-            btn_fs = wait.until(EC.element_to_be_clickable((By.XPATH, xpath_fs)))
-            btn_fs.click()
-            time.sleep(2)
-        except Exception as e:
-            errores_acumulados.append(f"Paso 8 falló: {str(e)}")
-            try: assert False, f"Fallo en paso 8: {e}"
-            except AssertionError: pass
-        finally:
-            allure.attach(driver.get_screenshot_as_png(), name="8_Fullscreen", attachment_type=allure.attachment_type.PNG)
+    # 8-14. SHARE Y REDES (SUBPASOS)
+    with allure.step("8. Menú Compartir"):
+        wait.until(EC.element_to_be_clickable(SELECTORS["share_btn"])).click()
+        time.sleep(1)
+        allure.attach(driver.get_screenshot_as_png(), name="8_Menu_Share", attachment_type=allure.attachment_type.PNG)
 
-    # 9. CERRAR
-    with allure.step("9. Cerrar VideoLab"):
-        try:
-            xpath_cerrar = '//*[@id="fusion-app"]/div[12]/main/div[17]/div/div[3]/button'
-            btn_cerrar = wait.until(EC.element_to_be_clickable((By.XPATH, xpath_cerrar)))
-            btn_cerrar.click()
-        except Exception as e:
-            errores_acumulados.append(f"Paso 9 falló: {str(e)}")
-            try: assert False, f"Fallo en paso 9: {e}"
-            except AssertionError: pass
-        finally:
-            allure.attach(driver.get_screenshot_as_png(), name="9_Cerrar_VideoLab", attachment_type=allure.attachment_type.PNG)
+        redes = [
+            ("Facebook", SELECTORS["facebook"]),
+            ("X", SELECTORS["x"]),
+            ("Copiar", SELECTORS["copiar"]),
+            ("WhatsApp", SELECTORS["whatsapp"]),
+            ("Telegram", SELECTORS["telegram"])
+        ]
 
-    # Finalización del test
-    if errores_acumulados:
-        pytest.fail(f"Test finalizado con errores en los pasos: {errores_acumulados}")
+        for nombre, xpath in redes:
+            with allure.step(f"   > {nombre}"):
+                btn = wait.until(EC.element_to_be_clickable(xpath))
+                btn.click()
+                if nombre == "Copiar":
+                    allure.attach(driver.get_screenshot_as_png(), name="11_Tooltip_Copiado", attachment_type=allure.attachment_type.PNG)
+                else:
+                    time.sleep(4)
+                    handles = driver.window_handles
+                    if len(handles) > 1:
+                        driver.switch_to.window(handles[-1])
+                        allure.attach(driver.get_screenshot_as_png(), name=f"Ventana_{nombre}", attachment_type=allure.attachment_type.PNG)
+                        driver.close()
+                        driver.switch_to.window(main_window)
+        
+        wait.until(EC.element_to_be_clickable(SELECTORS["cerrar_share"])).click()
+
+    # 15. SONIDO
+    with allure.step("15. Activar Sonido"):
+        wait.until(EC.element_to_be_clickable(SELECTORS["sonido"])).click()
+        time.sleep(1)
+        allure.attach(driver.get_screenshot_as_png(), name="15_Sonido_Activado", attachment_type=allure.attachment_type.PNG)
+
+    # 16-17. FULLSCREEN
+    with allure.step("16-17. Fullscreen"):
+        btn_fs = wait.until(EC.element_to_be_clickable(SELECTORS["fullscreen"]))
+        btn_fs.click() # Agrandar
+        time.sleep(2)
+        allure.attach(driver.get_screenshot_as_png(), name="16_Fullscreen_Activo", attachment_type=allure.attachment_type.PNG)
+        btn_fs.click() # Achicar
+        time.sleep(2)
+
+    # 18. NAVEGAR A NOTA
+    with allure.step("18. Navegar a la Nota"):
+        xpath_h2 = SELECTORS["h2_nota"][1]
+        link = wait.until(EC.element_to_be_clickable((By.XPATH, xpath_h2 + "/a")))
+        driver.execute_script("arguments[0].click();", link)
+        time.sleep(5)
+        clean_ui()
+        allure.attach(driver.get_screenshot_as_png(), name="18_Pagina_Nota", attachment_type=allure.attachment_type.PNG)
+
+    # 19. VOLVER ATRÁS Y CIERRE INTELIGENTE
+    with allure.step("19. Volver atrás y Cerrar"):
+        driver.back()
+        time.sleep(5)
+        clean_ui()
+        try:
+            # Intento cerrar el reproductor si quedó abierto
+            btn_close = wait.until(EC.element_to_be_clickable(SELECTORS["cerrar_reproductor"]))
+            btn_close.click()
+            time.sleep(1)
+            status = "Cerrado_Manualmente"
+        except:
+            status = "Ya_estaba_en_Home"
+        
+        allure.attach(driver.get_screenshot_as_png(), name=f"19_Final_{status}", attachment_type=allure.attachment_type.PNG)
